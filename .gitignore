@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# per-run output (logs, state, findings, reports) — never committed
+runs/
+
+# local secrets and overrides
+.env
+.env.*
+*.local.toml
+credentials.enc
+credentials.key
+memory.key
+*.db
+
+# editors / OS
+.idea/
+.vscode/
+.DS_Store

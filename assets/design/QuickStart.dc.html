@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AutoPwn · Guided quick-start</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#050605}
+*{box-sizing:border-box}
+a{color:#E6EAE7;text-decoration:none}a:hover{color:#4ADE80}
+.ln{height:20px;white-space:pre;overflow:hidden;text-overflow:ellipsis}
+.gl{display:inline-block;width:1ch;text-align:center}
+button{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+:focus-visible{outline:1px solid #4ADE80;outline-offset:1px}
+.opt:hover{color:#FFFFFF}
+@keyframes rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.in{animation:rise .22s ease-out both}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="width: 1280px; height: 800px; display: flex; flex-direction: column; background: #0B0D0C; color: #E6EAE7; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 14px; line-height: 20px; overflow: hidden">
+  <div style="flex: 1; padding: 40px 6ch 0; display: flex; gap: 8ch">
+    <div style="flex: 1; min-width: 0">
+      <div class="ln"><span class="gl" style="color: #3A423D">┌</span>  <span style="background: #4ADE80; color: #0B0D0C; padding: 0 1ch; font-weight: 600">autopwn guide</span>  <span style="color: #8A938D">answer 3 questions · we build the command for you</span></div>
+      <div class="ln" style="color: #3A423D">│</div>
+
+      <sc-for list="{{done}}" as="d" hint-placeholder-count="2">
+        <div class="ln"><span class="gl" style="color: #4ADE80">◇</span>  {{d.q}}</div>
+        <div class="ln"><span class="gl" style="color: #3A423D">│</span>  <span style="color: #8A938D">{{d.a}}</span></div>
+        <div class="ln" style="color: #3A423D">│</div>
+      </sc-for>
+
+      <sc-if value="{{asking}}" hint-placeholder-val="{{ true }}">
+        <div class="in">
+          <div class="ln"><span class="gl" style="color: #6CB6FF">◆</span>  {{q.title}}</div>
+          <sc-for list="{{q.opts}}" as="o" hint-placeholder-count="3">
+            <button type="button" class="opt" onClick="{{o.pick}}" style="display: block; width: 100%">
+              <div class="ln"><span class="gl" style="color: #6CB6FF">│</span>  <span style="color: {{o.dc}}">{{o.dot}}</span> <span style="color: {{o.fg}}">{{o.label}}</span></div>
+              <div class="ln"><span class="gl" style="color: #6CB6FF">│</span>    <span style="color: #8A938D">{{o.hint}}</span></div>
+            </button>
+          </sc-for>
+          <div class="ln"><span class="gl" style="color: #6CB6FF">└</span></div>
+          <div class="ln"></div>
+          <div class="ln" style="display: flex; gap: 2ch">
+            <button type="button" onClick="{{next}}" style="background: #4ADE80; color: #0B0D0C; padding: 0 2ch; font-weight: 600">Next  ↵</button>
+            <sc-if value="{{canBack}}" hint-placeholder-val="{{ false }}"><button type="button" onClick="{{back}}" style="background: #1B201D; padding: 0 2ch">Back  esc</button></sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ready}}" hint-placeholder-val="{{ false }}">
+        <div class="in">
+          <div class="ln"><span class="gl" style="color: #4ADE80">◇</span>  Ready to run</div>
+          <div class="ln"><span class="gl" style="color: #3A423D">│</span></div>
+          <div style="display: flex"><span style="color: #3A423D; width: 3ch">│</span>
+            <div style="flex: 1; background: #131715; padding: 10px 2ch">
+              <div class="ln">{{cmd}}</div>
+            </div>
+          </div>
+          <div class="ln"><span class="gl" style="color: #3A423D">│</span></div>
+          <div class="ln"><span class="gl" style="color: #3A423D">│</span>  <span style="color: #8A938D">next time you can type this yourself in the shell</span></div>
+          <div class="ln"><span class="gl" style="color: #3A423D">└</span></div>
+          <div class="ln"></div>
+          <div class="ln" style="display: flex; gap: 2ch">
+            <a href="Shell.dc.html" style="background: #4ADE80; color: #0B0D0C; padding: 0 2ch; font-weight: 600">Start check  ↵</a>
+            <button type="button" onClick="{{back}}" style="background: #1B201D; padding: 0 2ch">Back  esc</button>
+            <button type="button" onClick="{{restart}}" style="color: #8A938D">start over</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <aside style="width: 46ch; padding-top: 40px">
+      <div class="ln" style="color: #8A938D">Always on in guided mode</div>
+      <div class="ln"></div>
+      <div class="ln"><span style="color: #4ADE80">✓</span> only targets your team approved</div>
+      <div class="ln"><span style="color: #4ADE80">✓</span> safe checks · nothing is changed</div>
+      <div class="ln"><span style="color: #4ADE80">✓</span> slow, polite traffic · ≤ 50 req/s</div>
+      <div class="ln"><span style="color: #4ADE80">✓</span> stops by itself after 30 min</div>
+      <div class="ln"><span style="color: #4ADE80">✓</span> plain-language fix advice</div>
+      <div class="ln"></div>
+      <div class="ln" style="color: #8A938D">Step {{stepN}} of 3</div>
+      <div class="ln"><span style="color: #4ADE80">{{progOn}}</span><span style="color: #2A312D">{{progOff}}</span></div>
+    </aside>
+  </div>
+
+  <div style="height: 20px; display: flex; justify-content: space-between; padding: 0 2ch; margin-bottom: 10px; color: #8A938D">
+    <span>~/engagements/company-lab</span>
+    <span><span style="color: #E6EAE7">↑↓</span> choose   <span style="color: #E6EAE7">↵</span> next   <span style="color: #E6EAE7">esc</span> back   <a href="Home.dc.html" style="color: #8A938D"><span style="color: #E6EAE7">ctrl+c</span> leave guide</a></span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":800}}'>
+var Q = [
+  { title: 'What do you want to check?', short: ['A website', 'A domain’s internet-facing services', 'Machines on our network'],
+    opts: [['A website', 'login pages, forms and common web weaknesses'], ['A domain’s internet-facing services', 'finds subdomains, then checks what each one exposes'], ['Machines on our network', 'open ports, old software, weak services']] },
+  { title: 'Which target?', byKind: [
+      [['juice.company.lab', 'web shop · scope SC-014'], ['dvwa.company.lab', 'training app · scope SC-014']],
+      [['company.lab', 'and its subdomains · scope SC-014']],
+      [['172.28.0.0/24', 'lab internal network · scope SC-009']]
+    ] },
+  { title: 'How thorough?', opts: [['Quick', 'about 3 minutes · the most common problems'], ['Standard', 'about 15 minutes · broader checks, same safety']] }
+];
+class Component extends DCLogic {
+  state = { step: 0, pick: [0, 0, 0] };
+  renderVals() {
+    var s = this.state, kind = s.pick[0];
+    var optsFor = i => (i === 1 ? Q[1].byKind[kind] : Q[i].opts);
+    var done = [];
+    for (var i = 0; i < Math.min(s.step, 3); i++) done.push({ q: Q[i].title, a: optsFor(i)[s.pick[i]][0] });
+    var asking = s.step < 3, q = null;
+    if (asking) {
+      var st = s.step;
+      q = { title: Q[st].title, opts: optsFor(st).map((o, j) => {
+        var on = s.pick[st] === j;
+        return { label: o[0], hint: o[1], dot: on ? '●' : '○', dc: on ? '#4ADE80' : '#8A938D', fg: on ? '#E6EAE7' : '#B8C0BA',
+                 pick: () => this.setState(p => { var n = p.pick.slice(); n[st] = j; if (st === 0) n[1] = 0; return { pick: n }; }) };
+      }) };
+    }
+    var target = Q[1].byKind[kind][s.pick[1]][0], quick = s.pick[2] === 0;
+    var cmd = kind === 0 ? 'scan web ' + target + ' --safe' + (quick ? '' : ' --standard') + ' | report pdf --plain'
+            : kind === 1 ? 'discover subdomains of ' + target + ' | scan web --safe' + (quick ? '' : ' --standard') + ' | report pdf --plain'
+            : 'discover hosts in ' + target + ' | probe services | scan network --safe' + (quick ? '' : ' --standard') + ' | report pdf --plain';
+    var n = Math.min(s.step + 1, 3), w = 30, on = Math.round(Math.min(s.step, 3) / 3 * w);
+    return {
+      done: done, asking: asking, ready: !asking, q: q || { title: '', opts: [] }, cmd: cmd,
+      canBack: s.step > 0, stepN: n, progOn: '━'.repeat(on), progOff: '━'.repeat(w - on),
+      next: () => this.setState(p => ({ step: Math.min(3, p.step + 1) })),
+      back: () => this.setState(p => ({ step: Math.max(0, p.step - 1) })),
+      restart: () => this.setState({ step: 0, pick: [0, 0, 0] })
+    };
+  }
+}
+</script>
+</body>
+</html>

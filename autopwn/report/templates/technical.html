@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{# Technical style: full evidence — request, response excerpt, and repro steps. #}
+{% block evidence scoped %}
+  {% if f.evidence.request %}
+    <div class="kv"><b>Request:</b></div>
+    <pre>{{ f.evidence.request }}</pre>
+  {% endif %}
+  {% if f.evidence.response %}
+    <div class="kv"><b>Response (excerpt):</b></div>
+    <pre>{{ f.evidence.response[:600] }}</pre>
+  {% endif %}
+  {% if f.evidence.steps %}
+    <div class="kv"><b>Steps:</b> {{ f.evidence.steps | join(' → ') }}</div>
+  {% endif %}
+{% endblock %}

@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AutoPwn · Home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#050605}
+*{box-sizing:border-box}
+a{color:#E6EAE7;text-decoration:none}a:hover{color:#4ADE80}
+.ln{height:20px;white-space:pre}
+.cur{display:inline-block;width:1ch;height:18px;background:#E6EAE7;vertical-align:-3px;animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.in{animation:rise .35s cubic-bezier(.2,.7,.2,1) both}
+@keyframes drop{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.pal{animation:drop .16s ease-out both}
+@keyframes px{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.mark{animation:px .9s steps(31) both}
+button{background:none;border:0;padding:0;font:inherit;color:inherit;cursor:pointer;text-align:left}
+:focus-visible{outline:1px solid #4ADE80;outline-offset:2px}
+.row{display:flex;align-items:center;height:20px;padding:0 2ch;white-space:pre}
+.row:hover{background:#1B201D}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="position: relative; width: 1280px; height: 800px; display: flex; flex-direction: column; background: #0B0D0C; color: #E6EAE7; font-family: 'Geist Mono', ui-monospace, monospace; font-size: 14px; line-height: 20px; overflow: hidden">
+  <main style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 40px">
+    <svg class="mark" role="img" aria-label="AutoPwn" viewBox="2 2 62 15" width="434" height="105" shape-rendering="crispEdges">
+      <path fill="#8A938D" d="M3 3h2v1h-2zM16 3h2v1h-2zM3 4h1v11h-1zM17 4h1v11h-1zM3 15h2v1h-2zM16 15h2v1h-2z"></path>
+      <path fill="#4ADE80" d="M7 5h1v1h-1zM13 5h1v1h-1zM8 6h1v1h-1zM12 6h1v1h-1zM9 7h3v1h-3zM6 8h1v1h-1zM8 8h5v1h-5zM14 8h1v1h-1zM7 9h3v1h-3zM11 9h3v1h-3zM6 10h4v1h-4zM11 10h4v1h-4zM7 11h3v1h-3zM11 11h3v1h-3zM6 12h1v1h-1zM8 12h2v1h-2zM11 12h2v1h-2zM14 12h1v1h-1zM8 13h5v1h-5z"></path>
+      <path fill="#8A938D" d="M35 5h1v1h-1zM35 6h1v1h-1zM23 7h3v1h-3zM28 7h1v1h-1zM32 7h1v1h-1zM34 7h4v1h-4zM41 7h3v1h-3zM26 8h1v1h-1zM28 8h1v1h-1zM32 8h1v1h-1zM35 8h1v1h-1zM40 8h1v1h-1zM44 8h1v1h-1zM23 9h4v1h-4zM28 9h1v1h-1zM32 9h1v1h-1zM35 9h1v1h-1zM40 9h1v1h-1zM44 9h1v1h-1zM22 10h1v1h-1zM26 10h1v1h-1zM28 10h1v1h-1zM31 10h2v1h-2zM35 10h1v1h-1zM38 10h1v1h-1zM40 10h1v1h-1zM44 10h1v1h-1zM23 11h4v1h-4zM29 11h2v1h-2zM32 11h1v1h-1zM36 11h2v1h-2zM41 11h3v1h-3z"></path>
+      <path fill="#E6EAE7" d="M46 7h4v1h-4zM52 7h1v1h-1zM56 7h1v1h-1zM58 7h4v1h-4zM46 8h1v1h-1zM50 8h1v1h-1zM52 8h1v1h-1zM56 8h1v1h-1zM58 8h1v1h-1zM62 8h1v1h-1zM46 9h1v1h-1zM50 9h1v1h-1zM52 9h1v1h-1zM54 9h1v1h-1zM56 9h1v1h-1zM58 9h1v1h-1zM62 9h1v1h-1zM46 10h4v1h-4zM52 10h1v1h-1zM54 10h1v1h-1zM56 10h1v1h-1zM58 10h1v1h-1zM62 10h1v1h-1zM46 11h1v1h-1zM53 11h1v1h-1zM55 11h1v1h-1zM58 11h1v1h-1zM62 11h1v1h-1zM46 12h1v1h-1z"></path>
+    </svg>
+
+    <div class="in" style="width: 84ch; display: flex; flex-direction: column; gap: 20px; animation-delay: .5s">
+      <div style="background: #131715; border-left: 2px solid {{modeColor}}; padding: 20px 2ch 0">
+        <div class="ln"><span class="cur"></span><span style="color: #8A938D"> {{placeholder}}</span></div>
+        <div class="ln"></div>
+        <div class="ln" style="padding-bottom: 20px; height: 40px"><span style="color: {{modeColor}}; font-weight: 600">{{mode}}</span>  <span style="color: #8A938D">{{modeDetail}}</span></div>
+      </div>
+      <div class="ln" style="display: flex; justify-content: flex-end; gap: 3ch; color: #8A938D">
+        <span><span style="color: #E6EAE7">tab</span> mode</span>
+        <button type="button" onClick="{{openPal}}"><span style="color: #E6EAE7">ctrl+p</span> commands</button>
+        <a href="QuickStart.dc.html" style="color: #8A938D"><span style="color: #E6EAE7">ctrl+g</span> guided</a>
+        <span><span style="color: #E6EAE7">?</span> help</span>
+      </div>
+
+      <div style="display: flex; flex-direction: column">
+        <sc-for list="{{todo}}" as="d" hint-placeholder-count="3">
+          <a href="{{d.href}}" class="row" style="padding: 0; gap: 2ch">
+            <span style="color: {{d.color}}; width: 1ch">{{d.glyph}}</span>
+            <span style="flex: 1; color: #E6EAE7">{{d.text}}</span>
+            <span style="color: #8A938D">{{d.key}}</span>
+          </a>
+        </sc-for>
+        <sc-if value="{{showJob}}" hint-placeholder-val="{{ true }}">
+          <div class="ln" style="display: flex; gap: 2ch">
+            <span style="color: #6CB6FF; width: 1ch">{{spin}}</span>
+            <span style="flex: 1">job 119 · scan network 172.28.0.0/24</span>
+            <span><span style="color: #6CB6FF">{{barOn}}</span><span style="color: #2A312D">{{barOff}}</span> <span style="color: #8A938D">{{pct}}</span></span>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+  </main>
+
+  <footer style="height: 20px; display: flex; justify-content: space-between; padding: 0 2ch; margin-bottom: 10px; color: #8A938D">
+    <span>~/engagements/company-lab</span>
+    <span><span style="color: #4ADE80">●</span> lab-srv 18ms   <span style="color: #B49CFF">◆</span> mcp ready   <span style="color: {{roleColor}}">{{role}}</span>   0.1.0</span>
+  </footer>
+
+  <sc-if value="{{pal}}" hint-placeholder-val="{{ false }}">
+    <div style="position: absolute; inset: 0; background: rgba(5,6,5,.72); display: flex; justify-content: center; padding-top: 140px">
+      <div class="pal" role="dialog" aria-label="Commands" style="width: 72ch; height: 480px; background: #131715; display: flex; flex-direction: column; padding: 20px 0">
+        <div class="ln" style="display: flex; justify-content: space-between; padding: 0 2ch"><span style="font-weight: 600">Commands</span><button type="button" onClick="{{closePal}}" style="color: #8A938D">esc</button></div>
+        <div class="ln"></div>
+        <div class="ln" style="padding: 0 2ch"><span style="color: #4ADE80">›</span> <span class="cur"></span><span style="color: #8A938D"> search</span></div>
+        <div class="ln"></div>
+        <div style="flex: 1; overflow: hidden">
+          <sc-for list="{{groups}}" as="g" hint-placeholder-count="4">
+            <div class="ln" style="padding: 0 2ch; color: #4ADE80">{{g.name}}</div>
+            <sc-for list="{{g.items}}" as="it">
+              <a href="{{it.href}}" class="row" style="background: {{it.bg}}; color: {{it.fg}}"><span style="flex: 1">{{it.label}}</span><span style="color: {{it.kc}}">{{it.key}}</span></a>
+            </sc-for>
+            <div class="ln"></div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"role":{"editor":"enum","options":["Pentester","Scope Approver","Admin","Viewer"],"default":"Pentester"},"palette":{"editor":"boolean","default":false},"$preview":{"width":1280,"height":800}}'>
+var SP = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
+var ROLE = {
+  'Pentester':      { c: '#4ADE80', mode: 'Run',    detail: 'company.lab · safe profile · 50 req/s', ph: 'discover subdomains of company.lab | scan web --safe' },
+  'Scope Approver': { c: '#6CB6FF', mode: 'Review', detail: '2 scope requests waiting', ph: 'scope review SC-014' },
+  'Admin':          { c: '#FFA552', mode: 'Admin',  detail: 'lab-srv · 4/4 workers', ph: 'admin health' },
+  'Viewer':         { c: '#8A938D', mode: 'Query',  detail: 'read-only · show, diff, report', ph: 'show findings where risk >= 70' }
+};
+var TODO = {
+  'Pentester': [
+    { glyph: '◆', color: '#B49CFF', text: 'Your AI assistant asks to run scan web juice.company.lab', key: 'ctrl+a', href: 'McpApproval.dc.html' },
+    { glyph: '±', color: '#FFA552', text: '4 new · 6 fixed · 1 reopened since last night’s scan', key: 'ctrl+d', href: 'Monitor.dc.html' },
+    { glyph: '▲', color: '#FF6B7A', text: '3 critical findings · 2 listed in CISA KEV', key: 'ctrl+f', href: 'Findings.dc.html' }
+  ],
+  'Scope Approver': [
+    { glyph: '○', color: '#6CB6FF', text: 'SC-014 company.lab external sweep · waiting for you', key: 'ctrl+k', href: 'Scopes.dc.html' },
+    { glyph: '○', color: '#6CB6FF', text: 'SC-015 juice.company.lab retest · waiting for you', key: 'ctrl+k', href: 'Scopes.dc.html' },
+    { glyph: '!', color: '#FFA552', text: 'SC-009 lab-internal expires in 2 days', key: 'ctrl+k', href: 'Scopes.dc.html' }
+  ],
+  'Admin': [
+    { glyph: '●', color: '#4ADE80', text: 'All services healthy · 4/4 workers · feeds synced 02:10', key: 'ctrl+h', href: 'Admin.dc.html' },
+    { glyph: '↑', color: '#FFA552', text: 'nuclei templates update available', key: 'ctrl+u', href: 'Admin.dc.html' },
+    { glyph: '✓', color: '#4ADE80', text: 'Audit chain verified · 4,821 entries', key: 'ctrl+l', href: 'Admin.dc.html' }
+  ],
+  'Viewer': [
+    { glyph: '▲', color: '#FF6B7A', text: '3 critical findings open on company.lab', key: 'ctrl+f', href: 'Findings.dc.html' },
+    { glyph: '±', color: '#FFA552', text: 'Last night: 4 new · 6 fixed · 1 reopened', key: 'ctrl+d', href: 'Monitor.dc.html' },
+    { glyph: '↓', color: '#8A938D', text: 'Executive report ready · company.lab-executive.pdf', key: 'ctrl+r', href: 'Monitor.dc.html' }
+  ]
+};
+var GROUPS = [
+  { name: 'Assess', items: [['Open shell', 'Shell', ':'], ['Guided quick-start', 'QuickStart', 'ctrl+g'], ['AI requests', 'McpApproval', 'ctrl+a']], roles: ['Pentester', 'Admin'] },
+  { name: 'Results', items: [['Findings', 'Findings', 'ctrl+f'], ['Changes since last scan', 'Monitor', 'ctrl+d']], roles: ['Pentester', 'Admin', 'Viewer', 'Scope Approver'] },
+  { name: 'Govern', items: [['Scopes', 'Scopes', 'ctrl+k']], roles: ['Scope Approver', 'Admin', 'Pentester'] },
+  { name: 'System', items: [['Admin console', 'Admin', 'ctrl+h'], ['Sign out', 'Main', '']], roles: ['Admin'] }
+];
+class Component extends DCLogic {
+  state = { pal: null, t: 0, p: 58 };
+  componentDidMount() {
+    this.iv = setInterval(() => this.setState(s => ({ t: s.t + 1, p: s.p >= 99 ? 58 : s.p + 0.25 })), 90);
+  }
+  componentWillUnmount() { clearInterval(this.iv); }
+  renderVals() {
+    var role = this.props.role ?? 'Pentester';
+    var r = ROLE[role] || ROLE.Pentester;
+    var s = this.state;
+    var pal = s.pal === null ? !!(this.props.palette ?? false) : s.pal;
+    var first = true;
+    var groups = GROUPS.filter(g => g.roles.indexOf(role) >= 0).map(g => ({
+      name: g.name,
+      items: g.items.map(i => {
+        var on = first; first = false;
+        return { label: i[0], href: i[1] + '.dc.html', key: i[2],
+                 bg: on ? '#4ADE80' : 'transparent', fg: on ? '#0B0D0C' : '#E6EAE7', kc: on ? '#0B0D0C' : '#8A938D' };
+      })
+    }));
+    var w = 20, on = Math.round(s.p / 100 * w);
+    return {
+      role: role, roleColor: r.c, mode: r.mode, modeColor: r.c, modeDetail: r.detail, placeholder: r.ph,
+      todo: TODO[role] || TODO.Pentester,
+      showJob: role === 'Pentester' || role === 'Admin',
+      spin: SP[s.t % 10],
+      barOn: '━'.repeat(on), barOff: '━'.repeat(w - on), pct: Math.floor(s.p) + '%',
+      pal: pal, groups: groups,
+      openPal: () => this.setState({ pal: true }),
+      closePal: () => this.setState({ pal: false })
+    };
+  }
+}
+</script>
+</body>
+</html>

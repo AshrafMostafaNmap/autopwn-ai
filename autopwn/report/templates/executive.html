@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{# Executive style: business-facing — no raw request/response evidence, just the
+   confirmed fact and the fix. The blue-team fields still render (from base). #}
+{% block evidence scoped %}
+  {% if f.evidence.steps %}
+    <div class="kv note">Confirmed non-destructively ({{ f.evidence.steps | length }} step proof).</div>
+  {% endif %}
+{% endblock %}

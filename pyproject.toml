@@ -1,0 +1,77 @@
+[project]
+name = "autopwn-ai"
+dynamic = ["version"]
+description = "Purple-team vulnerability discovery agent for the terminal — finds, safely verifies and reports."
+readme = "README.md"
+requires-python = ">=3.12"
+license = "LicenseRef-Proprietary"
+keywords = ["security", "purple-team", "blue-team", "vulnerability", "llm", "agent", "mcp", "tui"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console :: Curses",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Security",
+]
+dependencies = [
+    "rich>=14",
+    "textual>=6.0",
+    "pyfiglet>=1.0",
+    "litellm>=1.55",
+    "httpx>=0.27",
+    "cryptography>=42",
+    "jinja2>=3.1",
+    "mcp>=1.0",
+    "tenacity>=8",          # LiteLLM retries (429 / 5xx / network)
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.5"]
+browser = ["playwright>=1.40"]
+pdf = ["weasyprint>=60"]
+
+[project.urls]
+Homepage = "https://github.com/AshrafMostafaNmap/autopwn-ai"
+Documentation = "https://github.com/AshrafMostafaNmap/autopwn-ai/blob/main/docs/USER_GUIDE.md"
+Issues = "https://github.com/AshrafMostafaNmap/autopwn-ai/issues"
+
+[tool.setuptools.dynamic]
+version = { attr = "autopwn.__version__" }
+
+[tool.setuptools.package-data]
+autopwn = ["report/templates/*.html", "playbooks/*.md", "tui/*.tcss", "recon/wordlists/*.txt"]
+
+[project.scripts]
+autopwnai = "autopwn.cli:main"
+autopwn = "autopwn.cli:main"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["autopwn*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = [".venv", "runs"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E501", "UP042"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["E702", "E731", "B011"]
+"tools/**" = ["E402"]

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ data.meta.title }}</title>
+<style>
+  @page { size: A4; margin: 20mm 16mm; @bottom-center { content: "AutoPwn AI · confidential · page " counter(page) " of " counter(pages); font-size: 8pt; color: #64748b; } }
+  :root {
+    --navy:#0F172A; --green:#16A34A; --ink:#1e293b; --muted:#64748b; --line:#e2e8f0; --bg:#f8fafc;
+    --crit:#dc2626; --high:#ea580c; --med:#d97706; --low:#2563eb; --info:#64748b;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: "Helvetica Neue", Arial, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.5; margin: 0; }
+  h1 { font-size: 22pt; color: var(--navy); margin: 0 0 4pt; }
+  h2 { font-size: 14pt; color: var(--navy); border-bottom: 2px solid var(--green); padding-bottom: 3pt; margin: 22pt 0 10pt; }
+  h3 { font-size: 12pt; color: var(--navy); margin: 16pt 0 4pt; }
+  a { color: var(--green); }
+  .brand { display:flex; align-items:center; gap:8px; }
+  .brand .dot { width:10px; height:10px; background:var(--green); border-radius:2px; display:inline-block; }
+  .sub { color: var(--muted); font-size: 9.5pt; }
+  .meta { margin: 8pt 0 0; color: var(--muted); font-size: 9.5pt; }
+  .meta b { color: var(--ink); }
+  table { width:100%; border-collapse: collapse; font-size: 9.5pt; margin: 8pt 0; }
+  th, td { text-align: left; padding: 5pt 7pt; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--bg); color: var(--navy); font-size: 8.5pt; text-transform: uppercase; letter-spacing: .03em; }
+  .badge { display:inline-block; padding: 1pt 7pt; border-radius: 10px; color:#fff; font-size: 8pt; font-weight:700; text-transform: uppercase; }
+  .sev-critical{background:var(--crit)} .sev-high{background:var(--high)} .sev-medium{background:var(--med)}
+  .sev-low{background:var(--low)} .sev-info{background:var(--info)}
+  .cards { display:flex; gap:8px; margin: 10pt 0; }
+  .card { flex:1; border:1px solid var(--line); border-radius:8px; padding:8pt; text-align:center; }
+  .card .n { font-size: 20pt; font-weight:800; color:var(--navy); }
+  .card .l { font-size: 8pt; color:var(--muted); text-transform:uppercase; }
+  .finding { border:1px solid var(--line); border-radius:8px; padding:10pt 12pt; margin:10pt 0; break-inside: avoid; }
+  .finding .top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .kv { margin:3pt 0; font-size:9.5pt; }
+  .kv b { color:var(--navy); }
+  code, pre { font-family: "SF Mono", Menlo, monospace; font-size: 8.5pt; }
+  pre { background: var(--navy); color:#e2e8f0; padding:7pt 9pt; border-radius:6px; overflow:hidden; white-space:pre-wrap; word-break:break-all; }
+  .blue { background:#eff6ff; border-left:3px solid var(--low); padding:5pt 9pt; margin:4pt 0; border-radius:0 4px 4px 0; font-size:9.5pt; }
+  .blue b { color:#1e40af; }
+  .fix { background:#f0fdf4; border-left:3px solid var(--green); padding:5pt 9pt; margin:4pt 0; border-radius:0 4px 4px 0; font-size:9.5pt; }
+  .fix b { color:#166534; }
+  .foot { margin-top: 20pt; padding-top: 8pt; border-top:1px solid var(--line); color:var(--muted); font-size: 8.5pt; }
+  .note { color: var(--muted); font-style: italic; font-size: 9pt; }
+</style>
+</head>
+<body>
+  <div class="brand"><span class="dot"></span><h1>{{ data.meta.title }}</h1></div>
+  <div class="sub">{{ data.meta.tool }} {{ data.meta.version }} · purple-team · safe-verification only</div>
+  <div class="meta">
+    <b>Run:</b> {{ data.meta.run_id or '—' }} &nbsp;·&nbsp;
+    <b>Generated:</b> {{ data.meta.generated_at }} &nbsp;·&nbsp;
+    <b>Profile:</b> {{ data.meta.profile }}<br>
+    <b>Targets:</b> {{ data.meta.targets | join(', ') or '—' }}
+    {% if data.meta.goal %}<br><b>Objective:</b> {{ data.meta.goal }}{% endif %}
+  </div>
+
+  <h2>Executive Summary</h2>
+  <p><b>{{ data.total }}</b> verified finding(s). Highest severity:
+     <span class="badge sev-{{ data.top_severity }}">{{ data.top_severity }}</span></p>
+  <div class="cards">
+    {% for sev in ['critical','high','medium','low','info'] %}
+    <div class="card"><div class="n">{{ data.counts[sev] }}</div><div class="l">{{ sev }}</div></div>
+    {% endfor %}
+  </div>
+  {% if data.suspected_count %}
+  <p class="note">{{ data.suspected_count }} suspected item(s) could not be safely verified and are
+     excluded from this report — the false-positive filter. Nothing was exploited destructively.</p>
+  {% endif %}
+
+  <table>
+    <thead><tr><th>#</th><th>Pri</th><th>Severity</th><th>CVSS</th><th>Finding</th><th>Location</th></tr></thead>
+    <tbody>
+    {% for f in data.findings %}
+      <tr>
+        <td>{{ loop.index }}</td>
+        <td>{{ f | priority }}</td>
+        <td><span class="badge sev-{{ f.severity.rating.value }}">{{ f.severity.rating.value }}</span></td>
+        <td>{{ f.severity.cvss_score }}</td>
+        <td>{{ f.title }}</td>
+        <td>{{ f.target.url or f.target.host }}{% if f.target.param %} (<code>{{ f.target.param }}</code>){% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Findings</h2>
+  {% for f in data.findings %}
+  <div class="finding">
+    <div class="top">
+      <h3>{{ loop.index }}. {{ f.title }}</h3>
+      <span class="badge sev-{{ f.severity.rating.value }}">{{ f.severity.rating.value }} · CVSS {{ f.severity.cvss_score }} · {{ f | priority }}</span>
+    </div>
+    <div class="kv"><b>Target:</b> {{ f.target.url or f.target.host }}{% if f.target.param %} · param <code>{{ f.target.param }}</code>{% endif %}</div>
+    <div class="kv"><b>Mapping:</b> {{ f.owasp }}{% if f.cwe %} · {{ f.cwe }}{% endif %} &nbsp; <b>Confidence:</b> {{ '%.0f' | format(f.confidence * 100) }}%</div>
+    {% if f.severity.cvss_vector %}<div class="kv"><b>CVSS:</b> <code>{{ f.severity.cvss_vector }}</code></div>{% endif %}
+    {% if f.safe_poc %}<div class="kv"><b>Safe proof:</b> {{ f.safe_poc }}</div>{% endif %}
+    {% block evidence scoped %}{% endblock %}
+    <div class="blue"><b>🔵 Detection (blue team):</b> {{ f.detection_guidance }}</div>
+    <div class="fix"><b>🔵 Remediation:</b> {{ f.remediation }}</div>
+  </div>
+  {% endfor %}
+
+  <div class="foot">
+    Generated by {{ data.meta.tool }} {{ data.meta.version }}. All findings were confirmed with
+    non-destructive, safe-verification techniques only — no data was exfiltrated and no service was disrupted.
+  </div>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AutoPwn AI — Security Assessment</title>
+<style>
+  @page { size: A4; margin: 20mm 16mm; @bottom-center { content: "AutoPwn AI · confidential · page " counter(page) " of " counter(pages); font-size: 8pt; color: #64748b; } }
+  :root {
+    --navy:#0F172A; --green:#16A34A; --ink:#1e293b; --muted:#64748b; --line:#e2e8f0; --bg:#f8fafc;
+    --crit:#dc2626; --high:#ea580c; --med:#d97706; --low:#2563eb; --info:#64748b;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: "Helvetica Neue", Arial, sans-serif; color: var(--ink); font-size: 10.5pt; line-height: 1.5; margin: 0; }
+  h1 { font-size: 22pt; color: var(--navy); margin: 0 0 4pt; }
+  h2 { font-size: 14pt; color: var(--navy); border-bottom: 2px solid var(--green); padding-bottom: 3pt; margin: 22pt 0 10pt; }
+  h3 { font-size: 12pt; color: var(--navy); margin: 16pt 0 4pt; }
+  a { color: var(--green); }
+  .brand { display:flex; align-items:center; gap:8px; }
+  .brand .dot { width:10px; height:10px; background:var(--green); border-radius:2px; display:inline-block; }
+  .sub { color: var(--muted); font-size: 9.5pt; }
+  .meta { margin: 8pt 0 0; color: var(--muted); font-size: 9.5pt; }
+  .meta b { color: var(--ink); }
+  table { width:100%; border-collapse: collapse; font-size: 9.5pt; margin: 8pt 0; }
+  th, td { text-align: left; padding: 5pt 7pt; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { background: var(--bg); color: var(--navy); font-size: 8.5pt; text-transform: uppercase; letter-spacing: .03em; }
+  .badge { display:inline-block; padding: 1pt 7pt; border-radius: 10px; color:#fff; font-size: 8pt; font-weight:700; text-transform: uppercase; }
+  .sev-critical{background:var(--crit)} .sev-high{background:var(--high)} .sev-medium{background:var(--med)}
+  .sev-low{background:var(--low)} .sev-info{background:var(--info)}
+  .cards { display:flex; gap:8px; margin: 10pt 0; }
+  .card { flex:1; border:1px solid var(--line); border-radius:8px; padding:8pt; text-align:center; }
+  .card .n { font-size: 20pt; font-weight:800; color:var(--navy); }
+  .card .l { font-size: 8pt; color:var(--muted); text-transform:uppercase; }
+  .finding { border:1px solid var(--line); border-radius:8px; padding:10pt 12pt; margin:10pt 0; break-inside: avoid; }
+  .finding .top { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .kv { margin:3pt 0; font-size:9.5pt; }
+  .kv b { color:var(--navy); }
+  code, pre { font-family: "SF Mono", Menlo, monospace; font-size: 8.5pt; }
+  pre { background: var(--navy); color:#e2e8f0; padding:7pt 9pt; border-radius:6px; overflow:hidden; white-space:pre-wrap; word-break:break-all; }
+  .blue { background:#eff6ff; border-left:3px solid var(--low); padding:5pt 9pt; margin:4pt 0; border-radius:0 4px 4px 0; font-size:9.5pt; }
+  .blue b { color:#1e40af; }
+  .fix { background:#f0fdf4; border-left:3px solid var(--green); padding:5pt 9pt; margin:4pt 0; border-radius:0 4px 4px 0; font-size:9.5pt; }
+  .fix b { color:#166534; }
+  .foot { margin-top: 20pt; padding-top: 8pt; border-top:1px solid var(--line); color:var(--muted); font-size: 8.5pt; }
+  .note { color: var(--muted); font-style: italic; font-size: 9pt; }
+</style>
+</head>
+<body>
+  <div class="brand"><span class="dot"></span><h1>AutoPwn AI — Security Assessment</h1></div>
+  <div class="sub">AutoPwn AI 0.1.0 · purple-team · safe-verification only</div>
+  <div class="meta">
+    <b>Run:</b> sample-20261122 &nbsp;·&nbsp;
+    <b>Generated:</b> 2026-11-22 12:58 UTC &nbsp;·&nbsp;
+    <b>Profile:</b> safe<br>
+    <b>Targets:</b> 127.0.0.1 (demo)
+    <br><b>Objective:</b> Assess the demo web app for injection and misconfig
+  </div>
+
+  <h2>Executive Summary</h2>
+  <p><b>6</b> verified finding(s). Highest severity:
+     <span class="badge sev-critical">critical</span></p>
+  <div class="cards">
+    
+    <div class="card"><div class="n">1</div><div class="l">critical</div></div>
+    
+    <div class="card"><div class="n">1</div><div class="l">high</div></div>
+    
+    <div class="card"><div class="n">4</div><div class="l">medium</div></div>
+    
+    <div class="card"><div class="n">0</div><div class="l">low</div></div>
+    
+    <div class="card"><div class="n">0</div><div class="l">info</div></div>
+    
+  </div>
+  
+
+  <table>
+    <thead><tr><th>#</th><th>Pri</th><th>Severity</th><th>CVSS</th><th>Finding</th><th>Location</th></tr></thead>
+    <tbody>
+    
+      <tr>
+        <td>1</td>
+        <td>P1</td>
+        <td><span class="badge sev-critical">critical</span></td>
+        <td>9.8</td>
+        <td>SQL Injection</td>
+        <td>http://127.0.0.1:34447/item?id=1 (<code>id</code>)</td>
+      </tr>
+    
+      <tr>
+        <td>2</td>
+        <td>P2</td>
+        <td><span class="badge sev-high">high</span></td>
+        <td>7.5</td>
+        <td>Sensitive File Exposure</td>
+        <td>http://127.0.0.1:34447/.env</td>
+      </tr>
+    
+      <tr>
+        <td>3</td>
+        <td>P3</td>
+        <td><span class="badge sev-medium">medium</span></td>
+        <td>6.1</td>
+        <td>Reflected Cross-Site Scripting</td>
+        <td>http://127.0.0.1:34447/search?q=hi (<code>q</code>)</td>
+      </tr>
+    
+      <tr>
+        <td>4</td>
+        <td>P3</td>
+        <td><span class="badge sev-medium">medium</span></td>
+        <td>4.3</td>
+        <td>Security Misconfiguration (missing headers)</td>
+        <td>http://127.0.0.1:34447/item?id=1</td>
+      </tr>
+    
+      <tr>
+        <td>5</td>
+        <td>P3</td>
+        <td><span class="badge sev-medium">medium</span></td>
+        <td>4.3</td>
+        <td>Security Misconfiguration (missing headers)</td>
+        <td>http://127.0.0.1:34447/search?q=hi</td>
+      </tr>
+    
+      <tr>
+        <td>6</td>
+        <td>P3</td>
+        <td><span class="badge sev-medium">medium</span></td>
+        <td>4.3</td>
+        <td>Insecure Cookie Flags</td>
+        <td>http://127.0.0.1:34447/search?q=hi (<code>sid</code>)</td>
+      </tr>
+    
+    </tbody>
+  </table>
+
+  <h2>Findings</h2>
+  
+  <div class="finding">
+    <div class="top">
+      <h3>1. SQL Injection</h3>
+      <span class="badge sev-critical">critical · CVSS 9.8 · P1</span>
+    </div>
+    <div class="kv"><b>Target:</b> http://127.0.0.1:34447/item?id=1 · param <code>id</code></div>
+    <div class="kv"><b>Mapping:</b> A03:2021-Injection · CWE-89 &nbsp; <b>Confidence:</b> 95%</div>
+    <div class="kv"><b>CVSS:</b> <code>CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H</code></div>
+    <div class="kv"><b>Safe proof:</b> boolean differential confirmed (true~1.00, false~0.60)</div>
+    
+  
+    <div class="kv"><b>Request:</b></div>
+    <pre>GET http://127.0.0.1:34447/item?id=1 [id= TRUE vs FALSE]</pre>
+  
+  
+    <div class="kv"><b>Response (excerpt):</b></div>
+    <pre>true-len=19 false-len=21</pre>
+  
+  
+    <div class="kv"><b>Steps:</b> send AND 1=1 (true) and AND 1=2 (false) → true response matches baseline; false diverges</div>
+  
+
+    <div class="blue"><b>🔵 Detection (blue team):</b> Alert on DB errors in responses, anomalous query latency, and WAF rules matching tautologies/UNION in parameters; review ORM/raw-SQL usage.</div>
+    <div class="fix"><b>🔵 Remediation:</b> Use parameterized queries / prepared statements; validate and allow-list input; least-privilege DB accounts; disable verbose SQL errors.</div>
+  </div>
+  
+  <div class="finding">
+    <div class="top">
+      <h3>2. Sensitive File Exposure</h3>
+      <span class="badge sev-high">high · CVSS 7.5 · P2</span>
+    </div>
+    <div class="kv"><b>Target:</b> http://127.0.0.1:34447/.env</div>
+    <div class="kv"><b>Mapping:</b> A05:2021-Security Misconfiguration · CWE-538 &nbsp; <b>Confidence:</b> 95%</div>
+    <div class="kv"><b>CVSS:</b> <code>CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N</code></div>
+    <div class="kv"><b>Safe proof:</b> exposed /.env</div>
+    
+  
+    <div class="kv"><b>Request:</b></div>
+    <pre>GET http://127.0.0.1:34447/.env</pre>
+  
+  
+    <div class="kv"><b>Response (excerpt):</b></div>
+    <pre>SECRET_KEY=abc
+DB_PASS=hunter2
+</pre>
+  
+  
+    <div class="kv"><b>Steps:</b> request /.env → content matches expected signature</div>
+  
+
+    <div class="blue"><b>🔵 Detection (blue team):</b> Alert on access to dotfiles/backups (/.env, /.git, *.bak) in web logs; file-integrity monitoring on the web root.</div>
+    <div class="fix"><b>🔵 Remediation:</b> Remove secrets/backups from the web root; block dotfiles and archive extensions at the server; rotate any exposed secret.</div>
+  </div>
+  
+  <div class="finding">
+    <div class="top">
+      <h3>3. Reflected Cross-Site Scripting</h3>
+      <span class="badge sev-medium">medium · CVSS 6.1 · P3</span>
+    </div>
+    <div class="kv"><b>Target:</b> http://127.0.0.1:34447/search?q=hi · param <code>q</code></div>
+    <div class="kv"><b>Mapping:</b> A03:2021-Injection · CWE-79 &nbsp; <b>Confidence:</b> 95%</div>
+    <div class="kv"><b>CVSS:</b> <code>CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N</code></div>
+    <div class="kv"><b>Safe proof:</b> marker reflected unencoded in HTML context</div>
+    
+  
+    <div class="kv"><b>Request:</b></div>
+    <pre>GET http://127.0.0.1:34447/search?q=hi [q=apx46a7f976&#34;&gt;&lt;svg/onload=1&gt;]</pre>
+  
+  
+    <div class="kv"><b>Response (excerpt):</b></div>
+    <pre>&lt;body&gt;q: apx46a7f976&#34;&gt;&lt;svg/onload=1&gt;&lt;/body&gt;</pre>
+  
+  
+    <div class="kv"><b>Steps:</b> inject unique marker with tag-breakout → marker reflected verbatim (not entity-encoded)</div>
+  
+
+    <div class="blue"><b>🔵 Detection (blue team):</b> Monitor for script-like payloads reflected in responses; CSP violation reports; WAF signatures for &lt;script&gt;/onerror in parameters.</div>
+    <div class="fix"><b>🔵 Remediation:</b> Context-aware output encoding; a strict Content-Security-Policy; validate input; use framework auto-escaping.</div>
+  </div>
+  
+  <div class="finding">
+    <div class="top">
+      <h3>4. Security Misconfiguration (missing headers)</h3>
+      <span class="badge sev-medium">medium · CVSS 4.3 · P3</span>
+    </div>
+    <div class="kv"><b>Target:</b> http://127.0.0.1:34447/item?id=1</div>
+    <div class="kv"><b>Mapping:</b> A05:2021-Security Misconfiguration · CWE-16 &nbsp; <b>Confidence:</b> 95%</div>
+    <div class="kv"><b>CVSS:</b> <code>CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:N/A:N</code></div>
+    <div class="kv"><b>Safe proof:</b> missing: content-security-policy, strict-transport-security, x-frame-options, x-content-type-options, referrer-policy, permissions-policy</div>
+    
+  
+    <div class="kv"><b>Request:</b></div>
+    <pre>GET http://127.0.0.1:34447/item?id=1</pre>
+  
+  
+    <div class="kv"><b>Response (excerpt):</b></div>
+    <pre>response headers: content-type, date, server</pre>
+  
+  
+    <div class="kv"><b>Steps:</b> fetch the page → compare against expected security headers</div>
+  
+
+    <div class="blue"><b>🔵 Detection (blue team):</b> Baseline expected security headers and alert on drift via periodic header scans.</div>
+    <div class="fix"><b>🔵 Remediation:</b> Set CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy; harden defaults; disable directory listing and verbose errors.</div>
+  </div>
+  
+  <div class="finding">
+    <div class="top">
+      <h3>5. Security Misconfiguration (missing headers)</h3>
+      <span class="badge sev-medium">medium · CVSS 4.3 · P3</span>
+    </div>
+    <div class="kv"><b>Target:</b> http://127.0.0.1:34447/search?q=hi</div>
+    <div class="kv"><b>Mapping:</b> A05:2021-Security Misconfiguration · CWE-16 &nbsp; <b>Confidence:</b> 95%</div>
+    <div class="kv"><b>CVSS:</b> <code>CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:N/A:N</code></div>
+    <div class="kv"><b>Safe proof:</b> missing: content-security-policy, strict-transport-security, x-frame-options, x-content-type-options, referrer-policy, permissions-policy</div>
+    
+  
+    <div class="kv"><b>Request:</b></div>
+    <pre>GET http://127.0.0.1:34447/search?q=hi</pre>
+  
+  
+    <div class="kv"><b>Response (excerpt):</b></div>
+    <pre>response headers: content-type, date, server, set-cookie</pre>
+  
+  
+    <div class="kv"><b>Steps:</b> fetch the page → compare against expected security headers</div>
+  
+
+    <div class="blue"><b>🔵 Detection (blue team):</b> Baseline expected security headers and alert on drift via periodic header scans.</div>
+    <div class="fix"><b>🔵 Remediation:</b> Set CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy; harden defaults; disable directory listing and verbose errors.</div>
+  </div>
+  
+  <div class="finding">
+    <div class="top">
+      <h3>6. Insecure Cookie Flags</h3>
+      <span class="badge sev-medium">medium · CVSS 4.3 · P3</span>
+    </div>
+    <div class="kv"><b>Target:</b> http://127.0.0.1:34447/search?q=hi · param <code>sid</code></div>
+    <div class="kv"><b>Mapping:</b> A05:2021-Security Misconfiguration · CWE-614 &nbsp; <b>Confidence:</b> 95%</div>
+    <div class="kv"><b>CVSS:</b> <code>CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:L/I:L/A:N</code></div>
+    <div class="kv"><b>Safe proof:</b> cookie &#39;sid&#39; missing: httponly, secure, samesite</div>
+    
+  
+    <div class="kv"><b>Request:</b></div>
+    <pre>GET http://127.0.0.1:34447/search?q=hi</pre>
+  
+  
+    <div class="kv"><b>Response (excerpt):</b></div>
+    <pre>Set-Cookie: sid=… ; (flags: path=/)</pre>
+  
+  
+    <div class="kv"><b>Steps:</b> read Set-Cookie attributes</div>
+  
+
+    <div class="blue"><b>🔵 Detection (blue team):</b> Inspect Set-Cookie attributes in traffic; alert on session cookies lacking HttpOnly/Secure.</div>
+    <div class="fix"><b>🔵 Remediation:</b> Set HttpOnly, Secure, and SameSite on session cookies; scope Path/Domain tightly.</div>
+  </div>
+  
+
+  <div class="foot">
+    Generated by AutoPwn AI 0.1.0. All findings were confirmed with
+    non-destructive, safe-verification techniques only — no data was exfiltrated and no service was disrupted.
+  </div>
+</body>
+</html>

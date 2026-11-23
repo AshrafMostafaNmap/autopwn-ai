@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - name: Install
+        run: |
+          uv venv --python ${{ matrix.python }}
+          uv pip install -e ".[dev]"
+      - name: Lint
+        run: .venv/bin/ruff check autopwn tests tools
+      - name: Test
+        run: .venv/bin/pytest -q
+      - name: Offline benchmark (planted target)
+        run: AUTOPWN_HOME=$RUNNER_TEMP/ap .venv/bin/autopwnai eval
+
+  install-script:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install with install.sh from this checkout
+        run: sh install.sh --from . --no-setup
+      - name: Smoke test
+        run: |
+          export PATH="$HOME/.local/bin:$PATH"
+          autopwnai --version
+          autopwnai providers

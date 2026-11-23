@@ -1,0 +1,66 @@
+# AutoPwn AI — configuration.
+#
+# Project defaults. The app's own choices (/model, /provider, /mcp in `autopwnai`)
+# are saved per user in ~/.config/autopwn and override [llm] here; environment
+# variables (AUTOPWN_MODEL, …) override both.
+#
+# Secrets are NEVER put here. Keys are either stored encrypted by the app
+# (/provider or `autopwnai connect <provider>`) or read from the environment
+# variable named in `api_key_env`.
+#
+# Model ids follow LiteLLM's provider-prefixed form, so switching provider is a
+# one-line change:
+#   anthropic/claude-sonnet-5-5     (ANTHROPIC_API_KEY)
+#   openai/gpt-4o                   (OPENAI_API_KEY)
+#   gemini/gemini-1.5-pro           (GEMINI_API_KEY)
+#   ollama/llama3.1                 (local — set api_base, no key needed)
+
+[llm]
+model = "anthropic/claude-sonnet-5-5"
+provider = "anthropic"
+api_key_env = "ANTHROPIC_API_KEY"
+# api_base = "http://localhost:11434"   # uncomment for Ollama / vLLM / a gateway
+temperature = 0.2
+max_tokens = 4096
+timeout = 120
+require_tool_calling = true              # the agent needs tool-calling; enforced at startup
+
+[run]
+root = "runs"                            # per-run folders are created under here
+profile = "safe"                         # which [profiles.*] block is active
+
+[scope]
+# Soft scope: the agent assesses only what you authorize. Leave empty to declare
+# the scope interactively at run start.
+in_scope = []
+out_of_scope = []
+authorized_ack = false                   # set true only when you are authorized to test the targets
+
+[logging]
+level = "info"                           # debug | info | warning | error
+json = true                              # write runs/<id>/events.jsonl
+console = true                           # also mirror to the terminal
+
+# ── safety / behavior profiles ───────────────────────────────────────────────
+# destructive is always false in v1 — non-destruction is guaranteed by the
+# curated toolset, not just by this flag.
+[profiles.safe]
+destructive = false
+max_steps = 40
+rate_limit_rps = 5
+
+[profiles.standard]
+destructive = false
+max_steps = 80
+rate_limit_rps = 10
+
+# ── MCP servers (optional) ───────────────────────────────────────────────────
+# Tool servers available to every session in this project. Untrusted servers'
+# tools ask for approval before each call. Servers can also be added in the app
+# with /mcp (saved per user).
+#
+# [[mcp.servers]]
+# name = "filesystem"
+# command = "npx"
+# args = ["-y", "@modelcontextprotocol/server-filesystem", "/srv/evidence"]
+# trusted = false

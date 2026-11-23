@@ -1,0 +1,219 @@
+{
+  "schema": "autopwn.report/1",
+  "tool": {
+    "name": "AutoPwn AI",
+    "version": "0.1.0"
+  },
+  "run": {
+    "id": "sample-20261122",
+    "goal": "Assess the demo web app for injection and misconfig",
+    "targets": [
+      "127.0.0.1 (demo)"
+    ],
+    "profile": "safe",
+    "generated_at": "2026-11-22 12:58 UTC"
+  },
+  "summary": {
+    "total": 6,
+    "top_severity": "critical",
+    "by_severity": {
+      "critical": 1,
+      "high": 1,
+      "medium": 4,
+      "low": 0,
+      "info": 0
+    },
+    "by_owasp": {
+      "A03:2021-Injection": 2,
+      "A05:2021-Security Misconfiguration": 4
+    },
+    "suspected_not_reported": 0
+  },
+  "findings": [
+    {
+      "id": "AP-9A173146",
+      "title": "SQL Injection",
+      "target": {
+        "host": "127.0.0.1",
+        "url": "http://127.0.0.1:34447/item?id=1",
+        "param": "id"
+      },
+      "severity": {
+        "cvss_score": 9.8,
+        "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+        "rating": "critical"
+      },
+      "owasp": "A03:2021-Injection",
+      "cwe": "CWE-89",
+      "evidence": {
+        "request": "GET http://127.0.0.1:34447/item?id=1 [id= TRUE vs FALSE]",
+        "response": "true-len=19 false-len=21",
+        "screenshot": "",
+        "steps": [
+          "send AND 1=1 (true) and AND 1=2 (false)",
+          "true response matches baseline; false diverges"
+        ]
+      },
+      "safe_poc": "boolean differential confirmed (true~1.00, false~0.60)",
+      "detection_guidance": "Alert on DB errors in responses, anomalous query latency, and WAF rules matching tautologies/UNION in parameters; review ORM/raw-SQL usage.",
+      "remediation": "Use parameterized queries / prepared statements; validate and allow-list input; least-privilege DB accounts; disable verbose SQL errors.",
+      "confidence": 0.95,
+      "status": "verified",
+      "priority": "P1"
+    },
+    {
+      "id": "AP-1346FEF3",
+      "title": "Sensitive File Exposure",
+      "target": {
+        "host": "127.0.0.1",
+        "url": "http://127.0.0.1:34447/.env",
+        "param": null
+      },
+      "severity": {
+        "cvss_score": 7.5,
+        "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+        "rating": "high"
+      },
+      "owasp": "A05:2021-Security Misconfiguration",
+      "cwe": "CWE-538",
+      "evidence": {
+        "request": "GET http://127.0.0.1:34447/.env",
+        "response": "SECRET_KEY=abc\nDB_PASS=hunter2\n",
+        "screenshot": "",
+        "steps": [
+          "request /.env",
+          "content matches expected signature"
+        ]
+      },
+      "safe_poc": "exposed /.env",
+      "detection_guidance": "Alert on access to dotfiles/backups (/.env, /.git, *.bak) in web logs; file-integrity monitoring on the web root.",
+      "remediation": "Remove secrets/backups from the web root; block dotfiles and archive extensions at the server; rotate any exposed secret.",
+      "confidence": 0.95,
+      "status": "verified",
+      "priority": "P2"
+    },
+    {
+      "id": "AP-FC5C1641",
+      "title": "Reflected Cross-Site Scripting",
+      "target": {
+        "host": "127.0.0.1",
+        "url": "http://127.0.0.1:34447/search?q=hi",
+        "param": "q"
+      },
+      "severity": {
+        "cvss_score": 6.1,
+        "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+        "rating": "medium"
+      },
+      "owasp": "A03:2021-Injection",
+      "cwe": "CWE-79",
+      "evidence": {
+        "request": "GET http://127.0.0.1:34447/search?q=hi [q=apx46a7f976\"><svg/onload=1>]",
+        "response": "<body>q: apx46a7f976\"><svg/onload=1></body>",
+        "screenshot": "",
+        "steps": [
+          "inject unique marker with tag-breakout",
+          "marker reflected verbatim (not entity-encoded)"
+        ]
+      },
+      "safe_poc": "marker reflected unencoded in HTML context",
+      "detection_guidance": "Monitor for script-like payloads reflected in responses; CSP violation reports; WAF signatures for <script>/onerror in parameters.",
+      "remediation": "Context-aware output encoding; a strict Content-Security-Policy; validate input; use framework auto-escaping.",
+      "confidence": 0.95,
+      "status": "verified",
+      "priority": "P3"
+    },
+    {
+      "id": "AP-EDCEC00F",
+      "title": "Security Misconfiguration (missing headers)",
+      "target": {
+        "host": "127.0.0.1",
+        "url": "http://127.0.0.1:34447/item?id=1",
+        "param": null
+      },
+      "severity": {
+        "cvss_score": 4.3,
+        "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:N/A:N",
+        "rating": "medium"
+      },
+      "owasp": "A05:2021-Security Misconfiguration",
+      "cwe": "CWE-16",
+      "evidence": {
+        "request": "GET http://127.0.0.1:34447/item?id=1",
+        "response": "response headers: content-type, date, server",
+        "screenshot": "",
+        "steps": [
+          "fetch the page",
+          "compare against expected security headers"
+        ]
+      },
+      "safe_poc": "missing: content-security-policy, strict-transport-security, x-frame-options, x-content-type-options, referrer-policy, permissions-policy",
+      "detection_guidance": "Baseline expected security headers and alert on drift via periodic header scans.",
+      "remediation": "Set CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy; harden defaults; disable directory listing and verbose errors.",
+      "confidence": 0.95,
+      "status": "verified",
+      "priority": "P3"
+    },
+    {
+      "id": "AP-DF3768FC",
+      "title": "Security Misconfiguration (missing headers)",
+      "target": {
+        "host": "127.0.0.1",
+        "url": "http://127.0.0.1:34447/search?q=hi",
+        "param": null
+      },
+      "severity": {
+        "cvss_score": 4.3,
+        "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:N/A:N",
+        "rating": "medium"
+      },
+      "owasp": "A05:2021-Security Misconfiguration",
+      "cwe": "CWE-16",
+      "evidence": {
+        "request": "GET http://127.0.0.1:34447/search?q=hi",
+        "response": "response headers: content-type, date, server, set-cookie",
+        "screenshot": "",
+        "steps": [
+          "fetch the page",
+          "compare against expected security headers"
+        ]
+      },
+      "safe_poc": "missing: content-security-policy, strict-transport-security, x-frame-options, x-content-type-options, referrer-policy, permissions-policy",
+      "detection_guidance": "Baseline expected security headers and alert on drift via periodic header scans.",
+      "remediation": "Set CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy; harden defaults; disable directory listing and verbose errors.",
+      "confidence": 0.95,
+      "status": "verified",
+      "priority": "P3"
+    },
+    {
+      "id": "AP-E705CDB8",
+      "title": "Insecure Cookie Flags",
+      "target": {
+        "host": "127.0.0.1",
+        "url": "http://127.0.0.1:34447/search?q=hi",
+        "param": "sid"
+      },
+      "severity": {
+        "cvss_score": 4.3,
+        "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:L/I:L/A:N",
+        "rating": "medium"
+      },
+      "owasp": "A05:2021-Security Misconfiguration",
+      "cwe": "CWE-614",
+      "evidence": {
+        "request": "GET http://127.0.0.1:34447/search?q=hi",
+        "response": "Set-Cookie: sid=… ; (flags: path=/)",
+        "screenshot": "",
+        "steps": [
+          "read Set-Cookie attributes"
+        ]
+      },
+      "safe_poc": "cookie 'sid' missing: httponly, secure, samesite",
+      "detection_guidance": "Inspect Set-Cookie attributes in traffic; alert on session cookies lacking HttpOnly/Secure.",
+      "remediation": "Set HttpOnly, Secure, and SameSite on session cookies; scope Path/Domain tightly.",
+      "confidence": 0.95,
+      "status": "verified",
+      "priority": "P3"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "_comment": "Ground-truth catalogue for real intentionally-vulnerable targets. These require the operator to stand up a reachable instance (requires_instance). ground_truth entries are autopwn.detect.signatures.VULN_CLASSES ids. Set base_url to your instance and run `autopwn eval --target <name>`.",
+  "targets": [
+    {
+      "name": "OWASP Juice Shop",
+      "domain": "web",
+      "base_url": "http://localhost:3000",
+      "probes": ["/rest/products/search?q=test", "/#/login"],
+      "ground_truth": ["sqli", "xss_reflected", "sensitive_file", "security_misconfig", "cookie_flags"],
+      "notes": "Node/Angular shop; SQLi in product search, DOM/reflected XSS, exposed files. Stand up with `docker run -p 3000:3000 bkimminich/juice-shop`."
+    },
+    {
+      "name": "DVWA",
+      "domain": "web",
+      "base_url": "http://localhost:8080",
+      "probes": ["/vulnerabilities/sqli/?id=1&Submit=Submit", "/vulnerabilities/xss_r/?name=test"],
+      "ground_truth": ["sqli", "xss_reflected", "security_misconfig", "cookie_flags"],
+      "notes": "Damn Vulnerable Web App (PHP/MySQL). Set security level to low. Requires an authenticated session."
+    },
+    {
+      "name": "WebGoat",
+      "domain": "web",
+      "base_url": "http://localhost:8080/WebGoat",
+      "probes": ["/"],
+      "ground_truth": ["sqli", "xss_reflected", "security_misconfig"],
+      "notes": "OWASP WebGoat lessons. Most lessons require an authenticated, lesson-scoped session."
+    },
+    {
+      "name": "bWAPP",
+      "domain": "web",
+      "base_url": "http://localhost:8080/bWAPP",
+      "probes": ["/sqli_1.php?title=test&action=search"],
+      "ground_truth": ["sqli", "xss_reflected", "security_misconfig", "sensitive_file"],
+      "notes": "buggy Web Application (PHP). Requires login + bee/bug selection."
+    },
+    {
+      "name": "Metasploitable2",
+      "domain": "network",
+      "base_url": "",
+      "probes": [],
+      "ground_truth": ["exposed_service", "cleartext_service", "outdated_software", "weak_tls"],
+      "notes": "Vulnerable Linux VM. Evaluate with network recon + detection against its IP (telnet, ftp, exposed DB ports, old services)."
+    },
+    {
+      "name": "DIVA (Damn Insecure and Vulnerable App)",
+      "domain": "mobile",
+      "base_url": "",
+      "probes": [],
+      "ground_truth": ["mobile_secret", "mobile_cleartext", "mobile_exported"],
+      "notes": "Android APK. Evaluate via apk_inventory + mobile detection on the .apk file path."
+    },
+    {
+      "name": "InsecureBankv2",
+      "domain": "mobile",
+      "base_url": "",
+      "probes": [],
+      "ground_truth": ["mobile_secret", "mobile_cleartext", "mobile_exported", "mobile_debuggable"],
+      "notes": "Android banking app with planted flaws. Evaluate against the .apk file path."
+    },
+    {
+      "name": "Pivaa",
+      "domain": "mobile",
+      "base_url": "",
+      "probes": [],
+      "ground_truth": ["mobile_secret", "mobile_weak_crypto", "mobile_exported"],
+      "notes": "Purposefully Insecure and Vulnerable Android App. Evaluate against the .apk file path."
+    }
+  ]
+}

@@ -1,0 +1,208 @@
+/* AutoPwn AI — OpenCode-style layout in the brand palette */
+
+Screen {
+    background: #0B0D0C;
+    color: #E6EAE7;
+    layers: base overlay;
+}
+
+/* ── home ─────────────────────────────────────────────────────────────── */
+#home {
+    height: 1fr;
+    align: center middle;
+}
+#home-logo { width: auto; margin-bottom: 1; }
+#home-version { width: auto; margin-bottom: 2; }
+#home-hints { width: auto; }
+
+/* ── session ──────────────────────────────────────────────────────────── */
+#topbar {
+    height: 1;
+    padding: 0 2;
+    background: #0B0D0C;
+}
+#top-title { width: 1fr; }
+#top-meta { width: auto; }
+
+#messages {
+    height: 1fr;
+    padding: 0 2;
+    scrollbar-size-vertical: 1;
+    scrollbar-color: #2A312D;
+    scrollbar-background: #0B0D0C;
+}
+.msg { height: auto; margin-top: 1; }
+.msg.user {
+    border-left: thick #4ADE80;
+    background: #131715;
+    padding: 0 1;
+}
+.msg.assistant { padding: 0 1; }
+.msg.narration { padding: 0 1; color: #8A938D; }
+.msg.tool, .msg.notice, .msg.finding, .msg.working { margin-top: 0; padding: 0 1; }
+.msg.finding { background: #131715; }
+
+/* ── prompt ───────────────────────────────────────────────────────────── */
+#complete {
+    layer: overlay;
+    dock: bottom;
+    offset: 0 -4;
+    max-height: 12;
+    height: auto;
+    width: 72;
+    margin: 0 2;
+    background: #131715;
+    border: round #2A312D;
+}
+#prompt-row {
+    height: 3;
+    margin: 0 1;
+    border-left: thick #4ADE80;
+    background: #131715;
+}
+#prompt-glyph { width: 3; padding: 1 1 0 1; color: #4ADE80; text-style: bold; }
+#prompt {
+    width: 1fr;
+    border: none;
+    background: #131715;
+    padding: 1 0 0 0;
+    height: 3;
+}
+#prompt:focus { border: none; }
+#status {
+    height: 1;
+    padding: 0 1;
+    background: #0B0D0C;
+}
+
+/* ── dialogs ──────────────────────────────────────────────────────────── */
+ModalScreen {
+    align: center middle;
+    background: #0B0D0C 60%;
+}
+.dialog {
+    width: 76;
+    max-width: 95%;
+    height: auto;
+    max-height: 85%;
+    background: #131715;
+    border: round #2A312D;
+    padding: 1 2;
+}
+.dialog.wide { width: 110; }
+.dialog.tall { height: 80%; }
+.dialog-header { height: 1; margin-bottom: 1; }
+.dialog-title { width: 1fr; color: #E6EAE7; text-style: bold; }
+.dialog-esc { width: auto; color: #3A423D; }
+.dialog-buttons { height: auto; margin-top: 1; }
+.dialog-buttons Button {
+    margin-right: 1;
+    min-width: 12;
+    height: 1;
+    border: none;
+    background: #1B201D;
+    color: #E6EAE7;
+    text-style: none;
+}
+.dialog-buttons Button:focus, .dialog-buttons Button:hover { background: #4ADE80; color: #0B0D0C; }
+.dialog-buttons Button.-success { color: #4ADE80; }
+.dialog-buttons Button.-error { color: #FF6B7A; }
+.dialog-buttons Button.-success:focus, .dialog-buttons Button.-success:hover { color: #0B0D0C; }
+.dialog-buttons Button.-error:focus, .dialog-buttons Button.-error:hover { background: #FF6B7A; color: #0B0D0C; }
+.checks { height: auto; }
+.checks Checkbox { margin-right: 2; }
+.field { color: #8A938D; margin-top: 1; }
+.dialog Input { background: #0B0D0C; border: none; padding: 0 1; height: 1; margin-top: 1; }
+.dialog Input:focus { border: none; background: #1B201D; }
+#pick-list, #mcp-list {
+    height: auto;
+    max-height: 24;
+    background: #131715;
+    border: none;
+    margin-top: 1;
+}
+#pick-list > .option-list--option-highlighted,
+#mcp-list > .option-list--option-highlighted,
+#dl-list > .option-list--option-highlighted,
+#complete > .option-list--option-highlighted {
+    background: #1B201D;
+}
+#pick-footer { margin-top: 1; }
+#dl-list { height: 1fr; background: #131715; border: none; }
+#dl-detail-box { height: 1fr; border-top: solid #2A312D; padding-top: 1; }
+#help-scroll { height: auto; max-height: 30; }
+.dialog.approval { border: round #FFA552; }
+.leader {
+    dock: bottom;
+    width: 100%;
+    height: auto;
+    background: #131715;
+    border-top: solid #2A312D;
+    padding: 0 2;
+}
+LeaderDialog { align: center bottom; background: #0B0D0C 0%; }
+
+#fatal { margin: 4 8; }
+
+/* ── setup wizard ─────────────────────────────────────────────────────── */
+SetupScreen { align: center middle; background: #0B0D0C; }
+#setup {
+    width: 100;
+    max-width: 100%;
+    height: 100%;
+    max-height: 40;
+    padding: 1 2;
+}
+#setup-steps { height: 1; margin-bottom: 1; }
+#setup-body { height: 1fr; }
+#setup-body > * { height: 1fr; background: #0B0D0C; }
+#setup-logo { width: auto; margin: 1 0; }
+.setup-lead { margin-bottom: 1; }
+#setup-terms {
+    border-left: thick #FFA552;
+    background: #131715;
+    padding: 1 2;
+    margin-bottom: 1;
+}
+#setup Checkbox { background: #0B0D0C; border: none; padding: 0; }
+#setup Input { background: #131715; border: none; padding: 0 1; height: 1; margin-top: 1; }
+#setup Input:focus { background: #1B201D; }
+#prov-list, #mcp-pick, #model-list {
+    height: auto;
+    max-height: 22;
+    background: #0B0D0C;
+    border: round #2A312D;
+    padding: 0 1;
+}
+#prov-list:focus, #mcp-pick:focus, #model-list:focus { border: round #4ADE80; }
+#model-list > .option-list--option-highlighted { background: #1B201D; }
+#setup RadioSet { background: #0B0D0C; border: none; height: auto; }
+#key-title { margin-bottom: 1; }
+#key-status { margin-top: 1; }
+#tools-table { margin-top: 1; }
+#setup-nav { height: 1; margin-top: 1; }
+#setup-nav Button {
+    height: 1;
+    min-width: 10;
+    border: none;
+    background: #1B201D;
+    color: #E6EAE7;
+    text-style: none;
+}
+#setup-nav Button:focus, #setup-nav Button:hover { background: #4ADE80; color: #0B0D0C; }
+#setup-nav Button.-success { color: #4ADE80; }
+#setup-nav Button.-success:focus, #setup-nav Button.-success:hover { color: #0B0D0C; }
+#setup-nav Button:disabled { color: #3A423D; }
+#nav-msg { width: 1fr; padding: 0 2; content-align: right middle; }
+#setup .dialog-buttons Button { height: 1; }
+#setup .field { margin-top: 1; }
+#setup ToggleButton > .toggle--button { background: #1B201D; color: #3A423D; }
+#setup ToggleButton.-on > .toggle--button { color: #4ADE80; }
+#setup Checkbox:focus > .toggle--label,
+#setup RadioSet:focus > RadioButton.-selected > .toggle--label {
+    background: #1B201D;
+    color: #E6EAE7;
+    text-style: bold;
+}
+#setup SelectionList > .option-list--option-highlighted { background: #1B201D; }
+#setup SelectionList:focus > .option-list--option-highlighted { background: #1B201D; text-style: bold; }
