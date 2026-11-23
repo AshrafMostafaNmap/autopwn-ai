@@ -103,6 +103,8 @@ class SetupScreen(Screen):
                     yield SelectionList[str](id="mcp-pick")
                     yield Label("Scanners on this machine", classes="field")
                     yield Static("", id="tools-table")
+                    yield Checkbox("Download the missing scanners in the background after setup "
+                                   "(official releases, checksum-verified, no root)", value=True, id="get-scanners")
                 with VerticalScroll(id="done", can_focus=False):
                     yield Static("", id="summary")
             with Horizontal(id="setup-nav"):
@@ -352,6 +354,7 @@ class SetupScreen(Screen):
             mark = Text("✓", style=GREEN) if t.path else Text("·", style=FAINT)
             how = Text(t.install, style=GRAY) if t.install else Text("installed", style=FAINT)
             table.add_row(mark, Text(t.name, style=WHITE), Text(t.purpose, style=GRAY), how)
+        self.query_one("#get-scanners", Checkbox).display = bool(self._missing_scanners())
         note = Text("\nOptional — the agent uses what is installed. Full install commands: autopwnai doctor",
                     style=FAINT)
         from rich.console import Group
@@ -362,7 +365,12 @@ class SetupScreen(Screen):
         return {"operator": self.query_one("#operator", Input).value.strip(),
                 "mode": "hitl" if self.query_one("#mode", RadioSet).pressed_index == 0 else "autonomous",
                 "mcp": list(self.query_one("#mcp-pick", SelectionList).selected),
-                "model": self.model}
+                "model": self.model,
+                "scanners": self._missing_scanners() if self.query_one("#get-scanners", Checkbox).value else []}
+
+    def _missing_scanners(self) -> list[str]:
+        from ..recon.installer import SCANNERS, resolve
+        return [s.name for s in SCANNERS.values() if s.downloadable and not resolve(s.name)]
 
     def _show_summary(self) -> None:
         c = self._choices()
@@ -371,7 +379,8 @@ class SetupScreen(Screen):
                 ("Providers", ", ".join(PROVIDERS[p].label for p in self.connected) or "none yet — use /provider"),
                 ("Model", c["model"] or self.session.model),
                 ("Mode", "human-in-the-loop" if c["mode"] == "hitl" else "autonomous"),
-                ("MCP servers", ", ".join(c["mcp"]) or "none")]
+                ("MCP servers", ", ".join(c["mcp"]) or "none"),
+                ("Scanners", f"download {', '.join(c['scanners'])}" if c["scanners"] else "nothing to download")]
         for k, v in rows:
             t.append(f"  {k:<14}", style=GRAY)
             t.append(f"{v}\n", style=WHITE)
@@ -409,4 +418,4 @@ class SetupScreen(Screen):
         s.settings.save()
         s.audit.record("setup", operator=c["operator"] or "operator", mode=c["mode"],
                        providers=self.connected, mcp=c["mcp"], terms=TERMS_VERSION)
-        self.app.call_from_thread(self.dismiss, notes)
+        self.app.call_from_thread(self.dismiss, {"notes": notes, "scanners": c["scanners"]})

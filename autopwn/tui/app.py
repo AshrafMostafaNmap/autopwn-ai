@@ -136,11 +136,14 @@ class AutoPwnApp(App):
     def action_setup(self, first_run: bool = False) -> None:
         from .setup import SetupScreen
 
-        def done(notes) -> None:
-            for n in notes or []:
+        def done(result) -> None:
+            result = result or {}
+            for n in result.get("notes", []):
                 self.main.notice(n, "warning")
-            if notes is not None:
+            if result:
                 self.main.notice("setup saved — /setup runs it again", "success")
+            if result.get("scanners"):
+                self._install_scanners(result["scanners"])
             if first_run or self._force_setup:
                 self._force_setup = False
                 self._startup(after_setup=True)
@@ -148,6 +151,24 @@ class AutoPwnApp(App):
                 self.provider_ok = self.session.ready().ok
                 self.main.refresh_status()
         self.push_screen(SetupScreen(rerun=not first_run), done)
+
+    @work(thread=True, group="scanners", exit_on_error=False)
+    def _install_scanners(self, names: list[str]) -> None:
+        from ..recon import installer
+        from ..recon.runner import which
+        say = lambda text, kind="system": self.call_from_thread(self.main.notice, text, kind)  # noqa: E731
+        say(f"downloading {len(names)} scanner(s) in the background: {', '.join(names)}")
+        for name in names:
+            try:
+                installer.install(name)
+                say(f"{name} installed", "success")
+            except installer.InstallError as e:
+                say(str(e), "error")
+        which.cache_clear()
+        if "nuclei" in names and installer.resolve("nuclei"):
+            ok = installer.update_nuclei_templates()
+            say("nuclei templates ready" if ok else "nuclei templates could not be downloaded — "
+                "run: autopwnai tools update nuclei", "success" if ok else "warning")
 
     def _wire(self) -> None:
         self.session.subscribe(lambda rec: self.post_message(EngineEvent(rec)))

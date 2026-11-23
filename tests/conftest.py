@@ -21,6 +21,11 @@ def isolated_home(tmp_path, monkeypatch):
     monkeypatch.setenv("AUTOPWN_HOME", str(home))
     for var in ("AUTOPWN_MODEL", "AUTOPWN_PROFILE", "AUTOPWN_RUN_ROOT", "AUTOPWN_API_BASE"):
         monkeypatch.delenv(var, raising=False)
+    import autopwn.recon.installer as installer
+
+    def no_downloads(*_a, **_k):
+        raise installer.InstallError("downloads are disabled in tests")
+    monkeypatch.setattr(installer, "_http", no_downloads)               # never fetch real scanners
     return home
 
 

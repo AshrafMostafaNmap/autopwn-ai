@@ -89,6 +89,7 @@ async def test_first_run_walks_through_setup(make_session, tmp_path, monkeypatch
         assert "fetch" in wiz.query_one("#mcp-pick", SelectionList).selected
         assert "browser" not in [wiz.query_one("#mcp-pick", SelectionList).get_option_at_index(i).value
                                  for i in range(wiz.query_one("#mcp-pick", SelectionList).option_count)]
+        assert wiz.query_one("#get-scanners", Checkbox).display          # scanners are missing here
         await _click(pilot, "#nav-next")
         assert wiz.current == "done"
         await _click(pilot, "#nav-next")
@@ -101,6 +102,8 @@ async def test_first_run_walks_through_setup(make_session, tmp_path, monkeypatch
         assert {c["name"] for c in s.mcp_servers} >= {"fetch"}
         assert checks == [("openai", "sk-bad"), ("openai", "sk-good")]
         assert Settings.load(s._path).setup_done
+        assert await _wait(pilot, lambda: "downloads are disabled in tests" in "\n".join(
+            t for _, t in app.main.history))
 
 
 async def test_setup_not_shown_again_and_reopens_with_command(make_session, monkeypatch):

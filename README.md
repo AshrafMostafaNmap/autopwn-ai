@@ -12,6 +12,14 @@
 
 *deep detection · offensive techniques · defender-framed · safe verification*
 
+[![CI](https://github.com/AshrafMostafaNmap/autopwn-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/AshrafMostafaNmap/autopwn-ai/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-3776AB)
+![Platforms](https://img.shields.io/badge/platform-linux%20%7C%20macOS-4ADE80)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AshrafMostafaNmap/autopwn-ai/main/install.sh | sh
+```
+
 </div>
 
 ---
