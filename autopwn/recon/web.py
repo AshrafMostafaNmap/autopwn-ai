@@ -81,7 +81,6 @@ def http_probe(target: str, *, vault=None, redactor=None, timeout: float = 15.0,
     if (m := _TITLE_RE.search(body)):
         surface.title = re.sub(r"\s+", " ", m.group(1)).strip()[:200]
 
-    # tech fingerprint
     for hk, fn in _TECH_HEADER_SIGNS.items():
         if hk in headers:
             surface.tech.append(fn(headers[hk]))
@@ -90,7 +89,7 @@ def http_probe(target: str, *, vault=None, redactor=None, timeout: float = 15.0,
             surface.tech.append(label)
     surface.tech = list(dict.fromkeys(surface.tech))
 
-    # security-header posture → notes (these become candidate findings in P3)
+    # security-header posture → notes
     missing = [h for h in SECURITY_HEADERS if h not in headers]
     if missing:
         surface.notes.append("missing security headers: " + ", ".join(missing))

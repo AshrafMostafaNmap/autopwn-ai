@@ -156,7 +156,6 @@ class BrowserEngine:
         self._pending: list = []
         self._seq = 0
 
-    # ── thread marshalling ─────────────────────────────────────────────────────
     def call(self, fn, *args, timeout: float = 600.0, **kw):
         return self._exec.submit(self._guarded, fn, *args, **kw).result(timeout=timeout)
 
@@ -188,7 +187,6 @@ class BrowserEngine:
                 pass
         self._exec.shutdown(wait=False, cancel_futures=True)
 
-    # ── launch ─────────────────────────────────────────────────────────────────
     def _ensure(self) -> None:
         if self.page is not None:
             return
@@ -260,7 +258,6 @@ class BrowserEngine:
                 return
         route.fulfill(response=resp)
 
-    # ── capture ────────────────────────────────────────────────────────────────
     def _on_request(self, req) -> None:
         self._seq += 1
         headers = {k: ("«redacted»" if k.lower() in SENSITIVE_HEADERS else v) for k, v in req.headers.items()}
@@ -299,7 +296,6 @@ class BrowserEngine:
             if len(body) <= MAX_BODY:
                 self.bodies[resp.url] = body.decode("utf-8", "replace")
 
-    # ── helpers ────────────────────────────────────────────────────────────────
     def _target(self, target: str):
         t = (target or "").strip()
         if re.fullmatch(r"e\d+", t):
@@ -332,7 +328,6 @@ class BrowserEngine:
         except Exception:
             pass
 
-    # ── Recorder: open / interact ──────────────────────────────────────────────
     def open(self, url: str) -> dict:
         def go():
             before = len(self.blocked)
@@ -413,18 +408,15 @@ class BrowserEngine:
             return str(path)
         return self.call(do)
 
-    # ── Elements ───────────────────────────────────────────────────────────────
     def dom(self, selector: str = "") -> dict:
         return self.call(lambda: self.page.evaluate(_DOM_JS, selector or None))
 
-    # ── Console ────────────────────────────────────────────────────────────────
     def console_messages(self, level: str = "") -> list[dict]:
         def do():
             msgs = [m for m in self.console if not level or m["type"] == level]
             return [{k: v for k, v in m.items() if k != "t"} for m in msgs][-200:]
         return self.call(do)
 
-    # ── Sources ────────────────────────────────────────────────────────────────
     def sources(self) -> dict:
         def do():
             scripts = [e for e in self.network if e.get("type") == "script"]
@@ -460,7 +452,6 @@ class BrowserEngine:
                     "source_maps": exposed, "secrets": secrets_found}
         return self.call(do)
 
-    # ── Network ────────────────────────────────────────────────────────────────
     def network_log(self, filter_text: str = "", types: list[str] | None = None, limit: int = 150) -> dict:
         def do():
             rows = [e for e in self.network if (not filter_text or filter_text in e["url"])
@@ -485,7 +476,6 @@ class BrowserEngine:
                 a["statuses"].add(e["status"])
         return [{**a, "params": sorted(a["params"]), "statuses": sorted(a["statuses"])} for a in apis.values()]
 
-    # ── Performance / Memory ───────────────────────────────────────────────────
     def performance(self) -> dict:
         def do():
             data = self.page.evaluate(_PERF_JS)
@@ -502,7 +492,6 @@ class BrowserEngine:
             return data
         return self.call(do)
 
-    # ── Application ────────────────────────────────────────────────────────────
     def application(self) -> dict:
         def do():
             data = self.page.evaluate(_APP_JS)
@@ -531,7 +520,6 @@ class BrowserEngine:
                     "_raw_cookies": self._context.cookies()}
         return self.call(do)
 
-    # ── Security ───────────────────────────────────────────────────────────────
     def security(self) -> dict:
         def do():
             doc = self.documents.get(_doc_key(self.page.url)) or {}
@@ -549,7 +537,6 @@ class BrowserEngine:
                     "x_powered_by": headers.get("x-powered-by", "")}
         return self.call(do)
 
-    # ── screenshot ─────────────────────────────────────────────────────────────
     def screenshot(self, full_page: bool = True) -> str:
         def do():
             d = self.artifacts_dir or Path.cwd()
@@ -559,7 +546,6 @@ class BrowserEngine:
             return str(path)
         return self.call(do)
 
-    # ── crawl (all pages) ──────────────────────────────────────────────────────
     def crawl(self, start: str, *, max_pages: int = 40, max_depth: int = 3, delay: float = 0.2) -> dict:
         def do():
             seen: set[str] = set()
@@ -604,7 +590,6 @@ class BrowserEngine:
                     "websockets": self.websockets[-50:]}
         return self.call(do, timeout=1800)
 
-    # ── passive audit of everything seen so far ───────────────────────────────
     def audit(self) -> list[checks.Issue]:
         def do():
             issues: list[checks.Issue] = []
@@ -648,7 +633,6 @@ class BrowserEngine:
             return list(unique.values())
         return self.call(do)
 
-    # ── DOM XSS (safe verification) ────────────────────────────────────────────
     def dom_xss(self, url: str, params: list[str] | None = None) -> list[dict]:
         """Put a harmless marker element into each URL / hash parameter and check
         whether the page turns it into a real DOM node. No script ever runs."""

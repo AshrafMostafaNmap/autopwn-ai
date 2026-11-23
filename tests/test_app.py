@@ -91,7 +91,6 @@ def app_with(make_session):
     return build
 
 
-# ── startup & home ────────────────────────────────────────────────────────────
 async def test_starts_on_home(app_with):
     app = app_with(targets=["app.lab"])
     async with app.run_test(size=SIZE) as pilot:
@@ -118,7 +117,6 @@ async def test_fatal_screen_when_the_session_cannot_start():
         assert app.screen.__class__.__name__ == "FatalScreen"
 
 
-# ── conversation ──────────────────────────────────────────────────────────────
 async def test_turn_shows_narration_tools_and_answer(app_with):
     llm = ScriptedLLM([call("recall_target", content="checking memory first", host="app.lab"),
                        say("**first assessment** of `app.lab`")])
@@ -190,7 +188,6 @@ async def test_verified_finding_is_announced(app_with):
         assert "◆ 1" in plain(app.main.query_one("#status"))
 
 
-# ── commands, completion, menu, leader ────────────────────────────────────────
 @pytest.mark.parametrize("cmd,cls", [
     ("/tools", ToolsDialog), ("/context", ContextDialog), ("/scope", ScopeDialog),
     ("/findings", FindingsDialog), ("/report", ReportDialog), ("/memory", MemoryDialog),
@@ -286,7 +283,6 @@ def test_fuzzy_score():
     assert fuzzy_score("xyz", "claude") == 0 and fuzzy_score("", "a") == 1
 
 
-# ── model & provider ──────────────────────────────────────────────────────────
 async def test_model_picker_lists_connected_providers_and_switches(app_with):
     app = app_with()
     async with app.run_test(size=SIZE) as pilot:
@@ -331,7 +327,6 @@ async def test_provider_flow_stores_key_then_offers_models(app_with):
         assert app.session.creds.get("openai") == "sk-openai-test-abcdef1234"
 
 
-# ── scope / approvals ─────────────────────────────────────────────────────────
 async def test_scope_dialog(app_with):
     app = app_with()
     async with app.run_test(size=SIZE) as pilot:
@@ -378,7 +373,6 @@ async def test_viewer_cannot_approve(app_with):
         assert "declined" in said(app)
 
 
-# ── MCP ───────────────────────────────────────────────────────────────────────
 async def test_mcp_add_custom_server(app_with):
     app = app_with()
     async with app.run_test(size=SIZE) as pilot:
@@ -430,7 +424,6 @@ async def test_mcp_presets_list(app_with):
         assert {"fetch", "filesystem", "browser", "git"} <= set(ids)
 
 
-# ── findings / report / memory / context / tools ──────────────────────────────
 def _verified(session):
     f = session.pipeline.add(Candidate("sqli", host="app.lab", url="http://app.lab/item?id=1",
                                        param="id", note="boolean differential confirmed"))
@@ -498,7 +491,6 @@ async def test_tools_dialog_lists_native_tools(app_with):
         assert d.query_one("#dl-list", OptionList).option_count == len(app.session.registry)
 
 
-# ── sessions ──────────────────────────────────────────────────────────────────
 async def test_export(app_with):
     app = app_with(ScriptedLLM([say("hello operator")]))
     async with app.run_test(size=SIZE) as pilot:
@@ -560,7 +552,6 @@ async def test_quit_saves(app_with):
     assert (session.ctx.run_dir / "session.json").is_file()
 
 
-# ── copy ──────────────────────────────────────────────────────────────────────
 async def test_copy_last_answer_and_whole_chat(app_with):
     app = app_with(ScriptedLLM([say("**the** answer")]))
     async with app.run_test(size=SIZE) as pilot:

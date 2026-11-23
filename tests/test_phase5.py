@@ -22,7 +22,6 @@ def _finding(fid, title="SQL Injection", score=9.8, status=Status.VERIFIED):
                    status=status)
 
 
-# ── encrypted KV + persistence ────────────────────────────────────────────────
 def test_memory_kv_roundtrip_and_encrypted_at_rest(tmp_path):
     key = Fernet.generate_key()
     m = TargetMemory.open(tmp_path / "m.db", key=key)
@@ -48,7 +47,6 @@ def test_memory_key_file_generated_and_reused(tmp_path):
     m2.close()
 
 
-# ── re-scan deltas (the DoD) ──────────────────────────────────────────────────
 def test_findings_delta_new_fixed_reopened(tmp_path):
     m = _mem(tmp_path)
     # run 1: two findings
@@ -76,7 +74,6 @@ def test_has_history_and_target_findings(tmp_path):
     m.close()
 
 
-# ── knowledge base ────────────────────────────────────────────────────────────
 def test_knowledge_base_lookup_and_search():
     kb = KnowledgeBase()
     t = kb.lookup("sqli")
@@ -88,5 +85,3 @@ def test_knowledge_base_lookup_and_search():
     assert any(t.class_id == "xss_reflected" for t in web)
     assert "SQL injection" in kb.playbook("web")
 
-
-# ── memory-aware compaction ───────────────────────────────────────────────────

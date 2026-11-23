@@ -55,7 +55,7 @@ class Conversation:
     counter: Callable[[Message], int] = _estimate
     summarizer: Summarizer = digest
     preamble: str = ""
-    summary: str = ""                 # rolling working summary of folded turns
+    summary: str = ""
     messages: list[Message] = field(default_factory=list)
     compactions: int = 0
     folded_messages: int = 0

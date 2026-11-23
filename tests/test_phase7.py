@@ -30,7 +30,6 @@ from autopwn.eval import (
 from autopwn.llm.provider import LLMResponse
 
 
-# ── the planted target end-to-end (real pipeline) ─────────────────────────────
 def test_local_benchmark_finds_all_planted_vulns():
     run = run_local_benchmark()
     outcome = run.outcomes[0]
@@ -60,7 +59,6 @@ def test_runner_returns_outcome_on_unreachable():
     assert outcome.probes == 1
 
 
-# ── metrics math (with a planted FP and FN) ───────────────────────────────────
 def test_metrics_precision_recall_f1():
     m = evaluate(detected={"a", "b", "d"}, ground_truth={"a", "b", "c"})
     assert m.tp == frozenset({"a", "b"})
@@ -85,7 +83,6 @@ def test_aggregate_totals():
     assert agg["macro_recall"] == pytest.approx((1.0 + 0.5) / 2)
 
 
-# ── code grader ───────────────────────────────────────────────────────────────
 def test_code_grader_identifies_fp_fn():
     outcome = RunOutcome(target="t", verified_classes=frozenset({"sqli", "xss_reflected", "open_redirect"}),
                          verified_findings=[], suspected=2)
@@ -106,7 +103,6 @@ def test_class_of_maps_title_to_id():
     assert class_of(f2) is None
 
 
-# ── LLM-as-judge (stub provider, no network) ──────────────────────────────────
 class _StubProvider:
     def __init__(self, content): self._content = content
     def complete(self, messages, tools=None): return LLMResponse(content=self._content)
@@ -139,7 +135,6 @@ def test_llm_judge_handles_provider_error():
     assert score.overall == 0.0 and score.error
 
 
-# ── human rubric ──────────────────────────────────────────────────────────────
 def test_human_rubric_full_and_zero():
     rubric = HumanRubric()
     keys = rubric.criteria_keys()
@@ -160,7 +155,6 @@ def test_human_rubric_clamps_out_of_range():
     assert r.weighted_total == pytest.approx(100.0)   # clamped to max
 
 
-# ── regression report ─────────────────────────────────────────────────────────
 def test_regression_report_json_and_markdown():
     run = run_local_benchmark(tool_version="0.1.0")
     report = run.report
@@ -184,7 +178,6 @@ def test_regression_report_shows_fp_fn_rows():
     assert "sensitive_file" in md                      # FN listed
 
 
-# ── external catalogue ────────────────────────────────────────────────────────
 def test_external_targets_catalogue():
     assert EXTERNAL_TARGETS, "external catalogue should load from benchmarks/"
     juice = external_by_name("OWASP Juice Shop")

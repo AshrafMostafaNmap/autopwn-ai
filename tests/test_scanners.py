@@ -115,7 +115,6 @@ def test_missing_scanner_says_how_to_install(make_session, monkeypatch):
     assert "autopwnai tools install nuclei" in r.error
 
 
-# ── installer ─────────────────────────────────────────────────────────────────
 def _zip(name, payload=b"#!/bin/sh\necho ok\n"):
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as z:

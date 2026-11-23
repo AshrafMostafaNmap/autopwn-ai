@@ -94,7 +94,6 @@ def register_scanner_tools(registry: ToolRegistry, *, ctx=None, vault=None, reda
         if target_model is not None:
             target_model.observe(surface)
 
-    # ── httpx ──────────────────────────────────────────────────────────────────
     def http_probe(args: dict, _ctx) -> ToolResult:
         targets = _targets(args, "targets", "url", "host")
         if not targets:
@@ -133,7 +132,6 @@ def register_scanner_tools(registry: ToolRegistry, *, ctx=None, vault=None, reda
                                  "description": "hosts or URLs (all must be in scope)"}},
                      "required": ["targets"]})
 
-    # ── subfinder ──────────────────────────────────────────────────────────────
     def subdomain_discovery(args: dict, _ctx) -> ToolResult:
         domain = (args.get("domain") or "").strip()
         if not domain:
@@ -160,7 +158,6 @@ def register_scanner_tools(registry: ToolRegistry, *, ctx=None, vault=None, reda
                  parameters={"type": "object", "properties": {"domain": {"type": "string"}},
                              "required": ["domain"]})
 
-    # ── dnsx ───────────────────────────────────────────────────────────────────
     def dns_records(args: dict, _ctx) -> ToolResult:
         hosts = _targets(args, "hosts", "host")
         if not hosts:
@@ -184,7 +181,6 @@ def register_scanner_tools(registry: ToolRegistry, *, ctx=None, vault=None, reda
                  parameters={"type": "object", "properties": {
                      "hosts": {"type": "array", "items": {"type": "string"}}}, "required": ["hosts"]})
 
-    # ── gau ────────────────────────────────────────────────────────────────────
     def known_urls(args: dict, _ctx) -> ToolResult:
         domain = host_of(args.get("domain") or "")
         if not domain:
@@ -209,7 +205,6 @@ def register_scanner_tools(registry: ToolRegistry, *, ctx=None, vault=None, reda
                  parameters={"type": "object", "properties": {"domain": {"type": "string"}},
                              "required": ["domain"]})
 
-    # ── katana ─────────────────────────────────────────────────────────────────
     def crawl(args: dict, _ctx) -> ToolResult:
         url = (args.get("url") or "").strip()
         if not url:
@@ -241,7 +236,6 @@ def register_scanner_tools(registry: ToolRegistry, *, ctx=None, vault=None, reda
                      "url": {"type": "string"}, "depth": {"type": "integer", "minimum": 1, "maximum": 3}},
                      "required": ["url"]})
 
-    # ── ffuf ───────────────────────────────────────────────────────────────────
     def content_discovery(args: dict, _ctx) -> ToolResult:
         url = (args.get("url") or "").strip().rstrip("/")
         if not url:
@@ -267,7 +261,6 @@ def register_scanner_tools(registry: ToolRegistry, *, ctx=None, vault=None, reda
                  parameters={"type": "object", "properties": {"url": {"type": "string"}},
                              "required": ["url"]})
 
-    # ── nuclei ─────────────────────────────────────────────────────────────────
     def template_scan(args: dict, _ctx) -> ToolResult:
         targets = _targets(args, "targets", "url", "host")
         if not targets:

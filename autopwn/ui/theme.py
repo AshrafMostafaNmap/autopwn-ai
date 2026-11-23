@@ -12,7 +12,6 @@ GRAY = "#8A938D"         # secondary text
 FAINT = "#3A423D"        # guides / tree lines
 FAINT2 = "#2A312D"       # progress-bar "off"
 
-# Role / status colors
 BLUE = "#6CB6FF"
 PURPLE = "#B49CFF"
 ORANGE = "#FFA552"
@@ -40,17 +39,14 @@ THEME = Theme(
         "purple": PURPLE,
         "orange": ORANGE,
         "red": RED,
-        # phase states
         "phase.done": GREEN,
         "phase.active": f"bold {GREEN}",
         "phase.pending": FAINT,
-        # severities
         "sev.critical": f"bold {RED}",
         "sev.high": f"bold {ORANGE}",
         "sev.medium": "bold #E0C64F",
         "sev.low": f"bold {BLUE}",
         "sev.info": GRAY,
-        # roles
         "role.user": f"bold {WHITE}",
         "role.agent": f"bold {GREEN}",
         "role.tool": BLUE,

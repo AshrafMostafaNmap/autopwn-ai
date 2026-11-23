@@ -6,6 +6,10 @@ temporary AUTOPWN_HOME, so the suite never reads or writes the user's real
 """
 from __future__ import annotations
 
+import os
+
+os.environ.setdefault("TEXTUAL_ANIMATIONS", "none")     # Textual reads it at import; pilot waits for animations
+
 import time
 
 import pytest

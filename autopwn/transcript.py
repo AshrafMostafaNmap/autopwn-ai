@@ -89,7 +89,6 @@ def entries_from_messages(messages) -> list[dict]:
     return out
 
 
-# ── structure ────────────────────────────────────────────────────────────────
 @dataclass
 class ToolUse:
     name: str
@@ -156,7 +155,6 @@ def build_turns(entries: list[dict]) -> list[Turn]:
     return turns
 
 
-# ── rendering ────────────────────────────────────────────────────────────────
 @dataclass
 class ExportMeta:
     title: str = ""

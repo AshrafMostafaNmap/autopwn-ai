@@ -60,7 +60,6 @@ class Tool:
     description: str
     parameters: dict[str, Any] = field(default_factory=lambda: {"type": "object", "properties": {}})
     handler: Handler | None = None
-    # governance / planning metadata
     requires_approval: bool = False      # gate even in autonomous mode
     phase: str | None = None             # which methodology phase it belongs to
     destructive: bool = False            # refused at registration: the toolset is non-destructive
@@ -86,8 +85,7 @@ class ToolRegistry:
 
     def register(self, tool: Tool) -> Tool:
         if tool.destructive:
-            # Hard invariant: non-destruction is guaranteed by never admitting
-            # destructive tools into the harness (docs/ROADMAP.md cross-cutting).
+            # non-destruction is guaranteed by never admitting a destructive tool
             raise ToolError(f"refusing to register destructive tool '{tool.name}' (the toolset is non-destructive)")
         if tool.name in self._tools:
             raise ToolError(f"duplicate tool name: {tool.name}")

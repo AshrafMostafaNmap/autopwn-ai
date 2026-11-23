@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 
 from autopwn.browser import checks
-from autopwn.eval.weblab import GROUND_TRUTH, WebLab
+from autopwn.eval.weblab import FAKE_AWS_KEY, GROUND_TRUTH, WebLab
 from autopwn.llm.provider import ToolCall
 
 
@@ -53,7 +53,7 @@ def test_devtools_tabs(session, lab):
     assert "Unhandled error" in _call(session, "browser_console").data["messages"][0]["text"]
     src = _call(session, "browser_sources").data
     assert "/api/search" in src["endpoints"] and src["source_maps"][0]["sources"] == ["src/app.ts", "src/secrets.ts"]
-    assert src["secrets"][0]["kind"] == "AWS access key" and "AKIAIOSFODNN7EXAMPLE" not in str(src)
+    assert src["secrets"][0]["kind"] == "AWS access key" and FAKE_AWS_KEY not in str(src)
     net = _call(session, "browser_network", types=["fetch"]).data
     assert any(a["endpoint"].endswith("/api/products") and a["params"] == ["limit"] for a in net["api"])
     app = _call(session, "browser_application").data

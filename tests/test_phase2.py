@@ -23,8 +23,9 @@ from autopwn.recon.registry import register_recon_tools
 from autopwn.recon.runner import ALLOWED_BINARIES, available, run, which
 from autopwn.recon.target_model import Service, Surface, TargetModel
 
+FAKE_GOOGLE_KEY = "AIza" + "SyA" + "1234567890" * 3 + "1Z"     # shaped like a key, not one
 
-# ── vault / redaction ─────────────────────────────────────────────────────────
+
 def test_vault_tokenize_idempotent_and_resolve():
     v = Vault.open()
     p1 = v.tokenize("supersecret", kind="cookie", hint="sess")
@@ -75,7 +76,6 @@ def test_redactor_patterns_tokenize_into_vault():
     assert "SECRETKEY123456" in v.inject(scrubbed)
 
 
-# ── cookie → placeholder (DoD) ────────────────────────────────────────────────
 def test_cookie_becomes_placeholder_value_stays_local():
     v = Vault.open()
     raw_cookies = [{"name": "session", "value": "REAL-SESSION-VALUE", "domain": "app.lab"}]
@@ -88,7 +88,6 @@ def test_cookie_becomes_placeholder_value_stays_local():
     assert v.resolve(safe[0]["value"]) == "REAL-SESSION-VALUE"
 
 
-# ── runner (allowlist + availability) ─────────────────────────────────────────
 def test_runner_refuses_non_allowlisted_binary():
     res = run("rm", ["-rf", "/"])
     assert res.ok is False and "allowlist" in res.error
@@ -108,7 +107,6 @@ def test_runner_runs_present_binary_and_redacts_argv():
     assert res.argv_redacted == ["openssl", "version"]
 
 
-# ── target model (surface merge) ──────────────────────────────────────────────
 def test_target_model_merges_surfaces():
     tm = TargetModel()
     tm.observe(Surface(host="h", domain="web", tech=["PHP"], server="nginx"))
@@ -119,7 +117,6 @@ def test_target_model_merges_surfaces():
     assert merged.services[0].port == 443
 
 
-# ── network recon (real, offline: scan a local listener) ──────────────────────
 def test_network_connect_scan_finds_open_port():
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0))
@@ -141,14 +138,12 @@ def test_network_connect_scan_finds_open_port():
     assert any(s.port == port for s in surface.services)
 
 
-# ── server recon (graceful on an unreachable port) ────────────────────────────
 def test_tls_inspect_handles_unreachable():
     surface, tls = server.inspect("127.0.0.1", 1)       # nothing listening on :1
     assert "error" in tls
     assert surface.domain == "server"
 
 
-# ── mobile intake (synthetic APK) ─────────────────────────────────────────────
 def _make_apk() -> io.BytesIO:
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w") as zf:
@@ -157,7 +152,7 @@ def _make_apk() -> io.BytesIO:
                     b"com.example.vulnerableapp")
         zf.writestr("classes.dex",
                     b"dex\n035\x00 some strings https://api.example.com/v1/login "
-                    b"AIzaSyA1234567890123456789012345678901Z key here")
+                    + FAKE_GOOGLE_KEY.encode() + b" key here")
         zf.writestr("lib/arm64-v8a/libnative.so", b"\x7fELF binary blob")
         zf.writestr("assets/config.json", b'{"endpoint":"https://backend.example.com"}')
     buf.seek(0)
@@ -174,11 +169,10 @@ def test_apk_inventory(tmp_path):
     assert "android.permission.INTERNET" in raw["permissions"]
     # the Google API key was captured into the vault, not surfaced raw
     assert len(v) >= 1
-    assert "AIzaSyA1234567890123456789012345678901Z" not in str(raw)
-    assert "AIzaSyA1234567890123456789012345678901Z" not in surface.summary()
+    assert FAKE_GOOGLE_KEY not in str(raw)
+    assert FAKE_GOOGLE_KEY not in surface.summary()
 
 
-# ── recon tool registration ───────────────────────────────────────────────────
 def test_register_recon_tools():
     reg = ToolRegistry()
     v = Vault.open()

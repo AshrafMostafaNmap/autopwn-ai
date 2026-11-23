@@ -66,7 +66,6 @@ class Dialog(ModalScreen):
         return self.app.session
 
 
-# ── picker ────────────────────────────────────────────────────────────────────
 class PickerDialog(Dialog):
     BINDINGS = [Binding("escape", "close", "close"),
                 Binding("down", "move(1)", show=False, priority=True),
@@ -215,7 +214,6 @@ def session_items(session) -> list[PickItem]:
     return items
 
 
-# ── provider key ──────────────────────────────────────────────────────────────
 class ProviderDialog(Dialog):
     TITLE = "Connect provider"
 
@@ -278,7 +276,6 @@ def provider_items(session) -> list[PickItem]:
             for r in session.provider_status()]
 
 
-# ── MCP ───────────────────────────────────────────────────────────────────────
 class MCPDialog(Dialog):
     TITLE = "MCP servers"
     BINDINGS = [Binding("escape", "close", "close"), Binding("enter", "toggle", "connect/disconnect"),
@@ -441,7 +438,6 @@ class AddMCPDialog(Dialog):
         self.dismiss(entry)
 
 
-# ── scope ─────────────────────────────────────────────────────────────────────
 class ScopeDialog(Dialog):
     TITLE = "Scope & authorization"
 
@@ -476,7 +472,6 @@ class ScopeDialog(Dialog):
         self.dismiss(True)
 
 
-# ── report ────────────────────────────────────────────────────────────────────
 class ReportDialog(Dialog):
     TITLE = "Report"
 
@@ -530,7 +525,6 @@ class ReportDialog(Dialog):
         self.query_one("#r-out", Static).update(renderable)
 
 
-# ── detail lists: findings, memory, tools ─────────────────────────────────────
 class DetailListDialog(Dialog):
     """A list on top, the highlighted item's detail below."""
     WIDTH = "wide"
@@ -663,7 +657,6 @@ class ToolsDialog(DetailListDialog):
         return Text(self._info[key]["description"], style=WHITE)
 
 
-# ── context / help / approval ─────────────────────────────────────────────────
 class ContextDialog(Dialog):
     TITLE = "Context & memory"
 

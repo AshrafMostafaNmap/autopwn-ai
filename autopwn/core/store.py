@@ -86,7 +86,6 @@ CREATE INDEX IF NOT EXISTS idx_memory_target   ON memory(target_key);
 """
 
 
-
 def _locked(fn):
     """Serialize access to the shared SQLite connection. The engine runs the agent
     in a worker thread while the UI reads from the main thread, so every public
@@ -106,7 +105,6 @@ class StateStore:
         self._conn.row_factory = sqlite3.Row
         self._lock = threading.RLock()
 
-    # ── lifecycle ─────────────────────────────────────────────────────────────
     @classmethod
     def open(cls, path: str | Path) -> StateStore:
         path = Path(path)
@@ -143,7 +141,6 @@ class StateStore:
         self._conn.commit()
         self._conn.close()
 
-    # ── runs ──────────────────────────────────────────────────────────────────
     @_locked
     def record_run(self, run_id: str, *, goal: str, targets: list[str],
                    profile: str, model: str) -> None:
@@ -167,7 +164,6 @@ class StateStore:
         row = self._conn.execute("SELECT * FROM runs WHERE run_id=?", (run_id,)).fetchone()
         return dict(row) if row else None
 
-    # ── targets ───────────────────────────────────────────────────────────────
     @_locked
     def upsert_target(self, run_id: str, host: str, *, url: str | None = None,
                       domain: str | None = None, fingerprint: dict | None = None) -> None:
@@ -186,7 +182,6 @@ class StateStore:
         rows = self._conn.execute("SELECT * FROM targets WHERE run_id=?", (run_id,)).fetchall()
         return [dict(r) for r in rows]
 
-    # ── findings ──────────────────────────────────────────────────────────────
     @_locked
     def save_finding(self, run_id: str, finding: Finding) -> None:
         d = finding.to_dict()
@@ -230,7 +225,6 @@ class StateStore:
         """The FP filter in SQL form: only verified findings are reportable."""
         return self.findings(run_id, status="verified")
 
-    # ── artifacts ─────────────────────────────────────────────────────────────
     @_locked
     def add_artifact(self, run_id: str, kind: str, path: str, *,
                      finding_id: str | None = None, meta: dict | None = None) -> int:
@@ -243,7 +237,6 @@ class StateStore:
         self._conn.commit()
         return int(cur.lastrowid)
 
-    # ── memory (per-target, cross-run) ────────────────────────────────────────
     @_locked
     def remember(self, target_key: str, key: str, value: Any, *, run_id: str | None = None) -> None:
         self._conn.execute(
@@ -266,7 +259,6 @@ class StateStore:
         ).fetchall()
         return {r["key"]: json.loads(r["value"]) for r in rows}
 
-    # ── misc ──────────────────────────────────────────────────────────────────
     @_locked
     def execute(self, sql: str, params: Iterable[Any] = ()) -> sqlite3.Cursor:
         return self._conn.execute(sql, tuple(params))

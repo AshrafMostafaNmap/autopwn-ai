@@ -35,7 +35,6 @@ def _orphans(messages: list[Message]) -> set[str]:
     return answered - issued
 
 
-# ── budget ────────────────────────────────────────────────────────────────────
 def test_budget_comes_from_window_reserve_and_system():
     conv = Conversation(window=10_000, reserve=1_000)
     conv.set_system(_chars(4_000))                         # ~1000 tokens
@@ -55,7 +54,6 @@ def test_no_compaction_under_budget():
     assert conv.maybe_compact() is False and conv.compactions == 0
 
 
-# ── compaction ────────────────────────────────────────────────────────────────
 def test_compaction_folds_whole_turns_and_keeps_pairs():
     conv = Conversation(window=3_000, reserve=200)
     for i in range(12):
@@ -138,7 +136,6 @@ def test_digest_carries_previous_summary_forward():
     assert "earlier: nginx found" in out and "check login" in out and "web_recon" in out
 
 
-# ── token counting ────────────────────────────────────────────────────────────
 def test_counter_tokenizes_each_message_once(monkeypatch):
     import autopwn.llm.tokens as tokens
     calls = []
@@ -159,7 +156,6 @@ def test_real_counter_and_window():
     assert context_window("ollama/some-unknown-model") == 32_000
 
 
-# ── model-written summary ─────────────────────────────────────────────────────
 def _finding(fid="AP-1", status=Status.VERIFIED):
     return Finding(id=fid, title="SQL Injection", target=Target(host="app.lab", url="http://app.lab/x"),
                    severity=SeverityInfo(cvss_score=9.8, rating=Severity.CRITICAL), status=status)
@@ -188,7 +184,6 @@ def test_old_findings_index_is_not_resummarized():
     assert "old notes" in prompt and "AP-9" not in prompt
 
 
-# ── long-term memory ──────────────────────────────────────────────────────────
 def test_episodes_are_encrypted_and_ordered(tmp_path):
     mem = TargetMemory.open(tmp_path / "m.db", key=Fernet.generate_key())
     mem.add_episode("app.lab", "first: mapped login", run_id="r1")
@@ -212,7 +207,6 @@ def test_long_term_brief(tmp_path):
     mem.close()
 
 
-# ── engine integration ────────────────────────────────────────────────────────
 def test_long_term_memory_reaches_the_system_prompt(make_session):
     llm = ScriptedLLM([say("ok")])
     s = make_session(llm, targets=["app.lab"])

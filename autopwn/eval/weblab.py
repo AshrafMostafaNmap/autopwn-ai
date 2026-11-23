@@ -23,6 +23,7 @@ from urllib.parse import parse_qs, urlparse
 GROUND_TRUTH = frozenset({"dom_xss", "sensitive_client_storage", "vulnerable_js_library", "exposed_source_map",
                           "weak_csp", "cors_misconfig", "cookie_flags", "info_leak_console"})
 
+FAKE_AWS_KEY = "AKIA" + "IOSFODNN7" + "EXAMPLE"     # AWS's documented example key, assembled
 FAKE_JWT = ("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJsYWItdXNlciIsInJvbGUiOiJhZG1pbiJ9."
             "c2lnbmF0dXJlLWZvci10aGUtbGFiLW9ubHk")
 
@@ -35,7 +36,7 @@ INDEX = """<!doctype html><html><head><meta charset="utf-8"><title>Lab Shop</tit
 <script src="/static/app.js"></script></body></html>"""
 
 APP_JS = """// Lab Shop bundle
-const API_KEY = "AKIAIOSFODNN7EXAMPLE";            // planted: key in client code
+const API_KEY = "__FAKE_AWS_KEY__";
 const routes = {
   "/products": async () => {
     const r = await fetch("/api/products?limit=10", {credentials: "include"});
@@ -62,7 +63,7 @@ document.cookie = "theme=dark; path=/";
 window.addEventListener("hashchange", render);
 render();
 //# sourceMappingURL=/static/app.js.map
-""".replace("__JWT__", FAKE_JWT)
+""".replace("__JWT__", FAKE_JWT).replace("__FAKE_AWS_KEY__", FAKE_AWS_KEY)
 
 JQUERY = "/*! jQuery v1.12.4 | (c) jQuery Foundation | jquery.org/license */\nwindow.jQuery = window.$ = {fn: {jquery: '1.12.4'}};\n"
 

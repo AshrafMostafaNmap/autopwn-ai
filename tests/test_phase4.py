@@ -33,7 +33,6 @@ def _meta():
                       targets=["app.lab"], profile="safe")
 
 
-# ── data model ────────────────────────────────────────────────────────────────
 def test_only_verified_included_and_sorted():
     findings = [_verified("AP-1", "SQL Injection", 9.8),
                 _verified("AP-2", "Reflected XSS", 6.1),
@@ -49,7 +48,6 @@ def test_priority_mapping():
     assert priority_of(_verified(score=6.1)) == "P3"
 
 
-# ── JSON ──────────────────────────────────────────────────────────────────────
 def test_json_valid_and_complete():
     data = build_report_data([_verified()], _meta(), suspected_count=2)
     doc = json.loads(renderers.to_json(data))            # must parse
@@ -65,7 +63,6 @@ def test_json_valid_and_complete():
     assert f["severity"]["cvss_score"] == 9.8
 
 
-# ── Markdown ──────────────────────────────────────────────────────────────────
 def test_markdown_renders_purple_fields():
     md = renderers.to_markdown(build_report_data([_verified()], _meta()))
     assert "# AutoPwn AI" in md
@@ -75,7 +72,6 @@ def test_markdown_renders_purple_fields():
     assert "CVSS 9.8" in md
 
 
-# ── HTML + style switch ───────────────────────────────────────────────────────
 def test_html_technical_has_evidence():
     html = renderers.to_html(build_report_data([_verified()], _meta(), style="technical"))
     assert "<html" in html.lower()
@@ -96,7 +92,6 @@ def test_html_escapes_content():
     assert "&lt;script&gt;" in html
 
 
-# ── builder writes files ──────────────────────────────────────────────────────
 def test_builder_writes_selected_formats(tmp_path):
     builder = ReportBuilder(tmp_path / "reports")
     res = builder.build([_verified()], _meta(), formats=["json", "md", "html"], style="technical")
@@ -115,7 +110,6 @@ def test_builder_pdf(tmp_path):
     assert pdf[:4] == b"%PDF"                             # real PDF
 
 
-# ── agent tool ────────────────────────────────────────────────────────────────
 def test_generate_report_tool(tmp_path):
     from autopwn.agent.tools import ToolRegistry
     from autopwn.detect import FindingsPipeline

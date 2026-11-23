@@ -27,8 +27,7 @@ def register_recon_tools(
     def _store_raw(name: str, host: str, raw: dict, finding_id=None) -> None:
         if ctx is None:
             return
-        # raw may hold secrets → scrub before it ever touches disk we might ship,
-        # but keep it local; we scrub cookie/token shapes defensively.
+        # raw output may hold secrets: scrub before writing it
         safe_raw = redactor.scrub_obj(raw)
         path = ctx.artifact_path(f"{name}-{host}-{ctx.run_id}.json".replace("/", "_"))
         path.write_text(json.dumps(safe_raw, indent=2, default=str), encoding="utf-8")

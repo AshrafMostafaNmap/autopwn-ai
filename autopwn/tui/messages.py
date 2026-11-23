@@ -38,7 +38,7 @@ class _MarkdownMessage(Static):
 
     def __init__(self, classes: str) -> None:
         self._width = 0
-        super().__init__(self._renderable(), classes=classes)
+        super().__init__(Text(""), classes=classes)            # filled at the real width on first layout
 
     def _renderable(self):
         raise NotImplementedError

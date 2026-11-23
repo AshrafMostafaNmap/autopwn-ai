@@ -150,12 +150,10 @@ class Agent:
             conv.maybe_compact(force=phase_changed and conv.history_tokens() > conv.budget // 2)
             self._last_phase = self.planner.phase
 
-            # THINK — one model turn, tools scoped to the current phase.
             tools = self.registry.specs(phase=self.planner.phase.value) or self.registry.specs()
             try:
                 resp = self.provider.complete(self.conversation.render(), tools=tools)
             except LLMError as e:
-                # A provider failure ends the turn cleanly — never crashes the app.
                 self._log("agent.error", error=str(e))
                 return self._finish(None, "error", error=str(e))
             self.budget.add_usage(resp.usage)
@@ -164,15 +162,12 @@ class Agent:
                       finish_reason=resp.finish_reason, tool_calls=len(resp.tool_calls),
                       total_tokens=resp.usage.total_tokens)
 
-            # No tool calls → the model's content is the final answer.
             if not resp.tool_calls:
                 return self._finish(resp.content, "stop")
 
-            # The model may narrate while it acts — surface that to the operator.
             if resp.content:
                 self._log("agent.message", text=resp.content)
 
-            # ACT + OBSERVE — dispatch each requested tool, feed results back.
             calls = list(resp.tool_calls)
             for i, call in enumerate(calls):
                 if self.cancelled:

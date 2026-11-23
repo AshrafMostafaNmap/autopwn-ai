@@ -19,6 +19,8 @@ from . import commands
 from .messages import AssistantMessage, FindingLine, Narration, Notice, ToolLine, UserMessage, Working
 
 HOME_HINTS = ("new", "model", "provider", "scope", "mcp", "copy", "export", "help")
+FADE = 0.18
+SCROLL = 0.15
 
 
 def _short(args) -> str:
@@ -51,7 +53,6 @@ class MainScreen(Screen):
         self._ticker = None
         self._completed = False
 
-    # ── layout ────────────────────────────────────────────────────────────────
     def compose(self) -> ComposeResult:
         with Vertical(id="home"):
             yield Center(Static(logo_mark(), id="home-logo"))
@@ -78,6 +79,7 @@ class MainScreen(Screen):
         return t
 
     def on_mount(self) -> None:
+        self.messages.anchor()
         self.query_one("#complete", OptionList).display = False
         self._show_home(True)
         self.prompt.focus()
@@ -96,15 +98,17 @@ class MainScreen(Screen):
         self.query_one("#topbar").display = not home
         self.messages.display = not home
 
-    # ── conversation ──────────────────────────────────────────────────────────
     def _add(self, widget, role: str, text: str) -> None:
+        """Mount a message with a short fade-in. The conversation stays anchored to
+        the bottom while the operator is there; scrolling up to read releases it."""
         self.history.append((role, text))
         self._show_home(False)
+        widget.styles.opacity = 0.0
         if self._working is not None and self._working.parent is not None:
             self.messages.mount(widget, before=self._working)
         else:
             self.messages.mount(widget)
-        self.messages.scroll_end(animate=False)
+        widget.styles.animate("opacity", 1.0, duration=FADE, easing="out_cubic")
 
     def user(self, text: str) -> None:
         self._add(UserMessage(text), "user", text)
@@ -154,13 +158,13 @@ class MainScreen(Screen):
                     self.tool_started(c.name, c.arguments).finish("ok")
                     self._pending[c.name].clear()
 
-    # ── turns ─────────────────────────────────────────────────────────────────
     def start_turn(self, text: str) -> None:
+        self.messages.anchor()
+        self.messages.scroll_end(animate=True, duration=SCROLL, easing="out_cubic")
         self.user(text)
         self._turn_started = time.monotonic()
         self._working = Working()
         self.messages.mount(self._working)
-        self.messages.scroll_end(animate=False)
         self._ticker = self.set_interval(0.1, self._tick)
         self._run_turn(text)
         self.refresh_status()
@@ -211,7 +215,6 @@ class MainScreen(Screen):
             for line in queue:
                 line.tick()
 
-    # ── engine events (UI thread) ─────────────────────────────────────────────
     def on_engine(self, rec: dict) -> None:
         kind = rec.get("kind", "")
         if kind == "tool.call":
@@ -235,7 +238,6 @@ class MainScreen(Screen):
         if kind in ("llm.result", "tool.result", "verify"):
             self.refresh_status()
 
-    # ── status / top bar ──────────────────────────────────────────────────────
     def refresh_status(self) -> None:
         s = self.app.session
         if s is None:
@@ -274,7 +276,6 @@ class MainScreen(Screen):
     def on_resize(self) -> None:
         self.refresh_status()
 
-    # ── prompt + completion ───────────────────────────────────────────────────
     @property
     def completing(self) -> bool:
         return bool(self.query_one("#complete", OptionList).display)
@@ -342,7 +343,6 @@ class MainScreen(Screen):
         self._complete()
         self.prompt.focus()
 
-    # ── keys ──────────────────────────────────────────────────────────────────
     def action_tab(self) -> None:
         if not self._complete():
             self.app.action_toggle_mode()
@@ -353,10 +353,11 @@ class MainScreen(Screen):
             if ol.option_count:
                 ol.highlighted = max(0, min(ol.option_count - 1, (ol.highlighted or 0) + delta))
         else:
-            self.messages.scroll_relative(y=delta * 3, animate=False)
+            self.messages.scroll_relative(y=delta * 3, duration=SCROLL, easing="out_cubic")
 
     def action_page(self, delta: int) -> None:
-        self.messages.scroll_relative(y=delta * max(5, self.messages.size.height - 2), animate=False)
+        self.messages.scroll_relative(y=delta * max(5, self.messages.size.height - 2),
+                                      duration=SCROLL * 1.6, easing="out_cubic")
 
     def action_escape(self) -> None:
         if self.completing:

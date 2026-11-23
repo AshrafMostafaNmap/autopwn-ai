@@ -15,7 +15,6 @@ from .ui.theme import THEME
 console = Console(theme=THEME)
 
 
-# ── app ───────────────────────────────────────────────────────────────────────
 def cmd_app(args: argparse.Namespace) -> int:
     from .tui.app import run_app
     run_app(config_path=getattr(args, "config", None))
@@ -28,7 +27,6 @@ def cmd_setup(args: argparse.Namespace) -> int:
     return 0
 
 
-# ── doctor ────────────────────────────────────────────────────────────────────
 def cmd_doctor(args: argparse.Namespace) -> int:
     from .config import ConfigError
     from .engine import EngineSession
@@ -73,7 +71,6 @@ def _print_scanners() -> None:
             console.print(f"  [muted]·[/] {t.name:<11} [muted]{t.purpose} — install:[/] {t.install}", soft_wrap=True)
 
 
-# ── MCP server ────────────────────────────────────────────────────────────────
 def cmd_mcp_serve(args: argparse.Namespace) -> int:
     import anyio
 
@@ -104,7 +101,6 @@ def cmd_mcp_serve(args: argparse.Namespace) -> int:
     return 0
 
 
-# ── scanners ──────────────────────────────────────────────────────────────────
 def cmd_tools(args: argparse.Namespace) -> int:
     from . import system
     from .recon import installer
@@ -190,7 +186,6 @@ def _install_system_packages(packages: list[str], info, args) -> int:
     return 1
 
 
-# ── providers / connect / models ──────────────────────────────────────────────
 def cmd_providers(args: argparse.Namespace) -> int:
     from .engine import EngineSession
     session = EngineSession.create(goal="providers", ephemeral=True)
@@ -253,7 +248,6 @@ def cmd_models(args: argparse.Namespace) -> int:
     return 0
 
 
-# ── run (one-shot) ────────────────────────────────────────────────────────────
 def cmd_run(args: argparse.Namespace) -> int:
     from .config import ConfigError, load_config
     from .engine import EngineSession
@@ -318,7 +312,6 @@ def cmd_run(args: argparse.Namespace) -> int:
     return 0 if result.reason != "error" else 1
 
 
-# ── eval ──────────────────────────────────────────────────────────────────────
 def cmd_eval(args: argparse.Namespace) -> int:
     from .eval import run_external_target, run_local_benchmark
     run = run_external_target(args.target) if args.target else run_local_benchmark()
@@ -330,7 +323,6 @@ def cmd_eval(args: argparse.Namespace) -> int:
     return 1 if run.report.summary()["total_false_positives"] else 0   # CI gate on FPs
 
 
-# ── export ────────────────────────────────────────────────────────────────────
 def cmd_export(args: argparse.Namespace) -> int:
     from pathlib import Path
 
@@ -368,7 +360,6 @@ def cmd_export(args: argparse.Namespace) -> int:
     return 0
 
 
-# ── parser ────────────────────────────────────────────────────────────────────
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="autopwnai",
                                 description="AutoPwn AI — purple-team vulnerability discovery agent")

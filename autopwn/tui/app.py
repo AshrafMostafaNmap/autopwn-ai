@@ -117,7 +117,6 @@ class AutoPwnApp(App):
         self._exiting = False
         self._quit_armed = 0.0
 
-    # ── startup ───────────────────────────────────────────────────────────────
     def on_mount(self) -> None:
         self.console.push_theme(MARKDOWN_THEME)
         try:
@@ -197,7 +196,6 @@ class AutoPwnApp(App):
             m.notice(f"MCP {name}: {res}", "success" if res.startswith("ok") else "error")
         m.refresh_status()
 
-    # ── engine → UI ───────────────────────────────────────────────────────────
     def on_engine_event(self, message: EngineEvent) -> None:
         if self.main is not None and self.main.is_mounted:
             self.main.on_engine(message.record)
@@ -206,7 +204,6 @@ class AutoPwnApp(App):
         if self.main is not None and self.main.is_mounted:
             self.main.refresh_status()
 
-    # ── approvals (agent thread) ──────────────────────────────────────────────
     def _approve_from_thread(self, call, tool) -> bool:
         if self.role == "Viewer" or self._exiting:
             return False
@@ -227,7 +224,6 @@ class AutoPwnApp(App):
                 return False
         return box["ok"]
 
-    # ── commands ──────────────────────────────────────────────────────────────
     def run_command(self, cmd: commands.Command, arg: str = "") -> None:
         if cmd.name == "model" and arg:
             self.apply_model(arg)
@@ -258,7 +254,6 @@ class AutoPwnApp(App):
                 self.run_command(cmd)
         self.push_screen(LeaderDialog(), pressed)
 
-    # ── model / provider ──────────────────────────────────────────────────────
     def action_open_model(self, provider: str | None = None) -> None:
         def chosen(model_id):
             if model_id:
@@ -318,7 +313,6 @@ class AutoPwnApp(App):
                                       placeholder="search providers",
                                       footer=message or "enter to add or change a key"), chosen)
 
-    # ── other dialogs ─────────────────────────────────────────────────────────
     def action_open_mcp(self) -> None:
         self.push_screen(MCPDialog(), lambda _r: self.refresh_status())
 
@@ -358,7 +352,6 @@ class AutoPwnApp(App):
                                       placeholder="search sessions",
                                       empty="no earlier sessions yet"), chosen)
 
-    # ── session controls ──────────────────────────────────────────────────────
     def action_toggle_mode(self) -> None:
         self.set_mode("autonomous" if self.session.mode == "hitl" else "hitl")
 
@@ -430,7 +423,6 @@ class AutoPwnApp(App):
                 self.main.notice(f"previous session saved · {host}: {summary}")
         self._startup()
 
-    # ── shutdown ──────────────────────────────────────────────────────────────
     def _close_session(self) -> None:
         if self._exiting or self.session is None:
             return
@@ -443,7 +435,6 @@ class AutoPwnApp(App):
         except Exception:
             pass
 
-    # ── clipboard ─────────────────────────────────────────────────────────────
     def copy_to_clipboard(self, text: str) -> None:
         """OSC 52 for terminals that support it, plus the desktop clipboard tool
         (wl-copy / xclip / xsel / pbcopy) for those that do not."""

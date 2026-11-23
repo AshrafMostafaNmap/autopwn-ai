@@ -64,7 +64,6 @@ def register_browser_tools(registry: ToolRegistry, *, engine: Callable[[], Brows
     target_prop = {"target": {"type": "string", "description": "element ref from browser_snapshot (e.g. e12) "
                               "or a CSS / text= selector"}}
 
-    # ── Recorder ───────────────────────────────────────────────────────────────
     add("browser_open", "Open a page in the real headless browser (JavaScript runs, SPAs render). Everything "
         "it loads is captured for the other browser_* tools.",
         lambda a: ToolResult(content="opened", data=engine().open(a["url"])), url_prop, ["url"])
@@ -97,7 +96,6 @@ def register_browser_tools(registry: ToolRegistry, *, engine: Callable[[], Brows
                 "user_field": {"type": "string"}, "pass_field": {"type": "string"}, "submit": {"type": "string"}},
         ["url", "username", "password"], approval=True)
 
-    # ── Elements ───────────────────────────────────────────────────────────────
     def dom(a):
         d = engine().dom(a.get("selector", ""))
         if not a.get("selector"):
@@ -110,7 +108,6 @@ def register_browser_tools(registry: ToolRegistry, *, engine: Callable[[], Brows
         "comments, inline scripts and event handlers; with a selector, that element's HTML.",
         dom, {"selector": {"type": "string"}})
 
-    # ── Console ────────────────────────────────────────────────────────────────
     def console(a):
         msgs = engine().console_messages(a.get("level", ""))
         return ToolResult(content=f"{len(msgs)} console message(s)", data={"messages": scrub(msgs)})
@@ -118,7 +115,6 @@ def register_browser_tools(registry: ToolRegistry, *, engine: Callable[[], Brows
         "leaked internals).", console, {"level": {"type": "string", "enum": ["", "error", "warning", "log",
                                                                               "info", "pageerror"]}})
 
-    # ── Sources ────────────────────────────────────────────────────────────────
     def sources(a):
         s = engine().sources()
         return ToolResult(content=f"{len(s['scripts'])} script(s), {len(s['endpoints'])} endpoint(s) in code, "
@@ -128,7 +124,6 @@ def register_browser_tools(registry: ToolRegistry, *, engine: Callable[[], Brows
         "downloadable source maps (and the original file names they reveal) and secrets in JavaScript.",
         sources, {})
 
-    # ── Network ────────────────────────────────────────────────────────────────
     def network(a):
         n = engine().network_log(a.get("filter", ""), a.get("types"), int(a.get("limit") or 150))
         return ToolResult(content=f"{n['total']} request(s), {len(n['api'])} API endpoint(s), "
@@ -139,12 +134,10 @@ def register_browser_tools(registry: ToolRegistry, *, engine: Callable[[], Brows
         network, {"filter": {"type": "string"}, "types": {"type": "array", "items": {"type": "string"}},
                   "limit": {"type": "integer"}})
 
-    # ── Performance / Memory ───────────────────────────────────────────────────
     add("browser_performance", "Performance and Memory tabs: navigation timing, resources by type, bytes, DOM "
         "size, JS heap and event-listener counts.",
         lambda a: ToolResult(content="performance metrics", data=engine().performance()), {})
 
-    # ── Application ────────────────────────────────────────────────────────────
     def application(a):
         app = engine().application()
         app.pop("_raw_storage", None)
@@ -156,7 +149,6 @@ def register_browser_tools(registry: ToolRegistry, *, engine: Callable[[], Brows
         "Cache Storage, service workers, the web app manifest and frames. Secret-looking values come back as "
         "«secret:…» placeholders.", application, {})
 
-    # ── Security ───────────────────────────────────────────────────────────────
     add("browser_security", "Security tab: TLS protocol and certificate, security headers present/missing, the "
         "CSP, CORS headers, mixed content and server banners.",
         lambda a: ToolResult(content="security overview", data=scrub(engine().security())), {})
@@ -168,7 +160,6 @@ def register_browser_tools(registry: ToolRegistry, *, engine: Callable[[], Brows
     add("browser_screenshot", "Save a screenshot of the current page as evidence.", screenshot,
         {"full_page": {"type": "boolean"}})
 
-    # ── crawl / audit / DOM XSS ────────────────────────────────────────────────
     def crawl(a):
         res = engine().crawl(a["url"], max_pages=min(int(a.get("max_pages") or 40), 200),
                              max_depth=min(int(a.get("max_depth") or 3), 6))

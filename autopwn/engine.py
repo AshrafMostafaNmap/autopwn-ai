@@ -61,7 +61,6 @@ class ReadyState:
 
 
 class EngineSession:
-    # ── construction ──────────────────────────────────────────────────────────
     @classmethod
     def create(cls, *, config: Config | None = None, config_path: str | None = None,
                settings: Settings | None = None, credentials: CredentialStore | None = None,
@@ -183,7 +182,6 @@ class EngineSession:
         """Receive every (redacted) engine event, on the agent's thread."""
         self.ctx.logger.add_sink(sink)
 
-    # ── provider / model ──────────────────────────────────────────────────────
     @property
     def model(self) -> str:
         return self.config.llm.model
@@ -292,7 +290,6 @@ class EngineSession:
                          "needs_api_base": p.needs_api_base})
         return rows
 
-    # ── chat ──────────────────────────────────────────────────────────────────
     def chat(self, message: str) -> AgentResult:
         """Run one turn (blocking)."""
         with self._turn_lock:
@@ -343,7 +340,6 @@ class EngineSession:
         except Exception:
             return ""
 
-    # ── approvals / mode ──────────────────────────────────────────────────────
     def set_approver(self, approver: Approver | None) -> None:
         self._approver = approver
 
@@ -365,7 +361,6 @@ class EngineSession:
         self._save_settings()
         self.audit.record("mode.change", mode=self.mode)
 
-    # ── scope ─────────────────────────────────────────────────────────────────
     def set_scope(self, *, targets: list[str] | None = None, out_of_scope: list[str] | None = None,
                   authorized: bool | None = None, domain: str | None = None) -> None:
         sc = self.config.scope
@@ -395,7 +390,6 @@ class EngineSession:
     def authorized(self) -> bool:
         return self.config.scope.authorized_ack
 
-    # ── introspection ─────────────────────────────────────────────────────────
     def tools_info(self) -> list[dict]:
         return [{"name": t.name, "description": t.description, "source": t.source,
                  "phase": t.phase or "any", "approval": t.requires_approval}
@@ -435,7 +429,6 @@ class EngineSession:
     def findings(self) -> list[Finding]:
         return self.pipeline.all()
 
-    # ── transcript / export ───────────────────────────────────────────────────
     def _record_event(self, rec: dict) -> None:
         if rec.get("kind") == "verify" and rec.get("verified"):
             f = next((x for x in self.pipeline.all() if x.id == rec.get("finding")), None)
@@ -472,7 +465,6 @@ class EngineSession:
     def compact(self) -> bool:
         return self.agent.conversation.maybe_compact(force=True)
 
-    # ── reports ───────────────────────────────────────────────────────────────
     def generate_report(self, formats: list[str], style: str = "technical") -> dict:
         verified = self.pipeline.reportable()
         if not verified:
@@ -485,14 +477,12 @@ class EngineSession:
         self.audit.record("report", formats=formats, style=style, findings=len(verified))
         return results
 
-    # ── memory ────────────────────────────────────────────────────────────────
     def memory_overview(self) -> list[dict]:
         return [{"target": t, "facts": self.memory.recall(t),
                  "history": self.memory.target_findings(t),
                  "episodes": self.memory.episodes(t, limit=5)}
                 for t in self.memory.known_targets()]
 
-    # ── MCP ───────────────────────────────────────────────────────────────────
     def mcp_configs(self) -> list[MCPServerConfig]:
         merged = {s["name"]: s for s in self.config.mcp_servers}
         merged.update({s["name"]: s for s in self.settings.mcp_servers})   # app entries win
@@ -555,7 +545,6 @@ class EngineSession:
     def connect_enabled_mcp(self) -> dict[str, str]:
         return self.mcp.connect_all(self.mcp_configs())
 
-    # ── persistence / resume ──────────────────────────────────────────────────
     def save_state(self) -> None:
         """Write the session so it can be resumed after the app closes."""
         conv = self.agent.conversation
@@ -597,7 +586,6 @@ class EngineSession:
         return [s for s in list_sessions(Path(self.config.run.root), limit=limit + 1)
                 if Path(s["path"]).resolve() != self.ctx.run_dir.resolve()][:limit]
 
-    # ── lifecycle ─────────────────────────────────────────────────────────────
     def close(self, status: str = "completed") -> dict[str, str]:
         """Save the session, write long-term memory, finish the audit trail and
         release resources. Idempotent. Returns per-target new/fixed/reopened."""

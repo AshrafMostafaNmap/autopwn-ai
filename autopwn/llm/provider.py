@@ -11,7 +11,6 @@ from ..config import LLMConfig
 from .catalog import litellm_model, provider_of
 
 
-# ── errors ───────────────────────────────────────────────────────────────────
 class LLMError(Exception):
     """Base for LLM-layer failures."""
 
@@ -32,7 +31,6 @@ class ProviderUnreachable(LLMError):
     """A local runtime (Ollama, LM Studio, a local server) is not running."""
 
 
-# ── wire types (ours, provider-agnostic) ─────────────────────────────────────
 @dataclass
 class Usage:
     prompt_tokens: int = 0
@@ -110,7 +108,6 @@ class Message:
                 msg["name"] = self.name
         return msg
 
-    # convenient constructors
     @classmethod
     def system(cls, text: str) -> Message: return cls("system", text)
     @classmethod
@@ -137,7 +134,6 @@ class LLMResponse:
         return bool(self.tool_calls)
 
 
-# ── the adapter ──────────────────────────────────────────────────────────────
 class LLMProvider:
     """Provider-agnostic chat/completion with normalized tool-calling."""
 
@@ -147,12 +143,10 @@ class LLMProvider:
         # (CLI help, tests that don't touch the LLM, etc.).
         import litellm  # noqa: F401
         self._litellm = litellm
-        # Keep LiteLLM quiet and predictable.
         litellm.drop_params = True          # ignore params a given provider doesn't support
         if hasattr(litellm, "suppress_debug_info"):
             litellm.suppress_debug_info = True
 
-    # ── capability gate ───────────────────────────────────────────────────────
     def tool_support(self) -> bool | None:
         """True / False when a catalog knows the model; None when it doesn't
         (local or brand-new models). Unknown is not the same as unsupported.
@@ -210,7 +204,6 @@ class LLMProvider:
                                 f"(not in the model catalog) — the first request will confirm it")
         return warnings
 
-    # ── completion ────────────────────────────────────────────────────────────
     def _common_kwargs(self, tools: list[ToolSpec] | None) -> dict:
         kw: dict[str, Any] = {
             "model": litellm_model(self.config.model),
@@ -245,7 +238,7 @@ class LLMProvider:
         payload = [m.to_openai() for m in messages]
         try:
             resp = self._litellm.completion(messages=payload, **{**self._common_kwargs(tools), **extra})
-        except Exception as e:                       # normalize provider errors
+        except Exception as e:
             raise LLMError(explain_error(e, self.config.model)) from e
         return self._parse(resp)
 
@@ -270,7 +263,6 @@ class LLMProvider:
         except Exception as e:
             raise LLMError(explain_error(e, self.config.model)) from e
 
-    # ── response parsing ──────────────────────────────────────────────────────
     def _parse(self, resp: Any) -> LLMResponse:
         import json
         choice = resp.choices[0]
@@ -307,7 +299,6 @@ class LLMProvider:
         )
 
 
-# ── provider errors → messages an operator can act on ─────────────────────────
 def _upstream_detail(text: str) -> str:
     """Pull the human part out of a provider's JSON error blob."""
     import re

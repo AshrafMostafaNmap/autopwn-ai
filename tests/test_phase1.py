@@ -19,7 +19,6 @@ from autopwn.llm.provider import LLMResponse, ToolCall, Usage
 from autopwn.mcp import register_mcp_tools
 
 
-# ── a scripted provider ───────────────────────────────────────────────────────
 class FakeProvider:
     """Returns queued LLMResponses in order; records messages it was given."""
     def __init__(self, script: list[LLMResponse]):
@@ -44,7 +43,6 @@ def _cfg():
     return c
 
 
-# ── tool registry ─────────────────────────────────────────────────────────────
 def test_registry_dispatch_and_errors():
     reg = ToolRegistry()
     reg.add("echo", "echo back", lambda a, c: ToolResult(content=a.get("x", "")))
@@ -78,7 +76,6 @@ def test_specs_phase_scoping():
     assert names == {"a", "c"}
 
 
-# ── planner ───────────────────────────────────────────────────────────────────
 def test_planner_forward_only():
     p = Planner()
     assert p.phase is Phase.RECON
@@ -93,8 +90,6 @@ def test_methodology_selection():
     assert methodology_for("network") is Methodology.PTES
 
 
-# ── conversation / compaction ─────────────────────────────────────────────────
-# ── approval gate / modes ─────────────────────────────────────────────────────
 def test_gate_autonomous_only_flagged():
     reg = ToolRegistry()
     plain = reg.add("plain", "d", lambda a, c: ToolResult())
@@ -121,7 +116,6 @@ def _recon_stub(reg):
             phase="recon")
 
 
-# ── the full loop ─────────────────────────────────────────────────────────────
 def test_loop_calls_tool_then_finishes():
     reg = ToolRegistry()
     planner = Planner()
@@ -190,7 +184,6 @@ def test_loop_advance_phase_tool_moves_planner():
     assert res.phase == "planning"
 
 
-# ── MCP surfacing (no live server) ────────────────────────────────────────────
 def test_mcp_tools_surface_into_registry():
     reg = ToolRegistry()
     calls = []

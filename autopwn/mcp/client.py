@@ -36,7 +36,6 @@ class MCPClient:
     def connected(self) -> bool:
         return self._session is not None
 
-    # ── lifecycle ─────────────────────────────────────────────────────────────
     def connect(self, timeout: float = 45.0) -> None:
         self._loop = asyncio.new_event_loop()
         self._thread = threading.Thread(target=self._loop.run_forever, daemon=True,
@@ -112,7 +111,6 @@ class MCPClient:
         from mcp.client.stdio import get_default_environment
         return {**get_default_environment(), **self.config.env}
 
-    # ── calls ─────────────────────────────────────────────────────────────────
     def _call(self, make_coro):
         """Run an SDK call; on a dropped connection reconnect once and retry."""
         for attempt in (1, 2):
@@ -164,7 +162,6 @@ class MCPClient:
             parts.append(text if text is not None else f"[binary {getattr(c, 'mime_type', '') or 'data'}]")
         return "\n".join(parts)
 
-    # ── registry ──────────────────────────────────────────────────────────────
     def surface_into(self, registry: ToolRegistry) -> list[str]:
         defs = self.list_tools()
         names = register_mcp_tools(registry, self.config.name, defs, self.invoke,

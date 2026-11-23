@@ -61,7 +61,6 @@ class SetupScreen(Screen):
     def session(self):
         return self.app.session
 
-    # ── layout ────────────────────────────────────────────────────────────────
     def compose(self) -> ComposeResult:
         with Vertical(id="setup"):
             yield Static("", id="setup-steps")
@@ -123,7 +122,6 @@ class SetupScreen(Screen):
         self._load_scan()
         self.query_one("#terms", Checkbox).focus()
 
-    # ── navigation ────────────────────────────────────────────────────────────
     @property
     def current(self) -> str:
         return STEPS[self.step]
@@ -185,14 +183,12 @@ class SetupScreen(Screen):
             return
         self._goto(self.step + 1)
 
-    # ── welcome ───────────────────────────────────────────────────────────────
     def _leave_welcome(self) -> bool:
         if not self.query_one("#terms", Checkbox).value:
             self._msg("please confirm you will only test authorized systems")
             return False
         return True
 
-    # ── providers ─────────────────────────────────────────────────────────────
     @work(thread=True, group="setup-scan", exit_on_error=False)
     def _load_scan(self) -> None:
         sc = scan(set(self.session.creds.providers()), dict(self.session.settings.api_bases))
@@ -223,7 +219,6 @@ class SetupScreen(Screen):
         self.key_index = 0
         return True
 
-    # ── keys ──────────────────────────────────────────────────────────────────
     def _show_key(self) -> None:
         if self.key_index >= len(self.key_queue):
             self._goto(self.step + 1)
@@ -290,7 +285,6 @@ class SetupScreen(Screen):
         self.key_index += 1
         self._show_key()
 
-    # ── model ─────────────────────────────────────────────────────────────────
     @work(thread=True, group="setup-models", exit_on_error=False)
     def _load_models(self) -> None:
         rows: list[tuple[str, str, str]] = []
@@ -332,7 +326,6 @@ class SetupScreen(Screen):
     def _model_picked(self) -> None:
         self._next()
 
-    # ── preferences ───────────────────────────────────────────────────────────
     def _fill_prefs(self, sc: Scan) -> None:
         added = {c.name for c in self.session.mcp_configs()}
         sl = self.query_one("#mcp-pick", SelectionList)
@@ -362,7 +355,6 @@ class SetupScreen(Screen):
         from rich.console import Group
         self.query_one("#tools-table", Static).update(Group(table, note))
 
-    # ── summary / finish ──────────────────────────────────────────────────────
     def _choices(self) -> dict:
         return {"operator": self.query_one("#operator", Input).value.strip(),
                 "mode": "hitl" if self.query_one("#mode", RadioSet).pressed_index == 0 else "autonomous",

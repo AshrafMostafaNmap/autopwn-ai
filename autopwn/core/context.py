@@ -139,7 +139,6 @@ class RunContext:
         self.logger.close()
         self.store.close()
 
-    # context-manager sugar so callers can't forget to close
     def __enter__(self) -> RunContext:
         return self
 

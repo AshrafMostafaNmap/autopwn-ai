@@ -31,7 +31,6 @@ from autopwn.memory import TargetMemory
 from autopwn.settings import CredentialStore, Settings, mask
 
 
-# ── settings ──────────────────────────────────────────────────────────────────
 def test_settings_roundtrip_and_mcp_entries(tmp_path):
     s = Settings.load(tmp_path / "s.json")
     s.model = "openai/gpt-4.1"
@@ -57,7 +56,6 @@ def test_settings_file_is_private(tmp_path):
     assert stat.S_IMODE((tmp_path / "d" / "s.json").stat().st_mode) == 0o600
 
 
-# ── credentials ───────────────────────────────────────────────────────────────
 def test_credentials_encrypted_and_private(tmp_path):
     store = CredentialStore(tmp_path / "c")
     store.set("anthropic", "sk-ant-SECRET-123456")
@@ -87,7 +85,6 @@ def test_mask_never_reveals_a_usable_key():
     assert mask(None) == "—"
 
 
-# ── catalog ───────────────────────────────────────────────────────────────────
 def test_catalog_lists_only_tool_capable_models():
     models = catalog.list_models("anthropic")
     assert models and all(m.id.startswith("anthropic/") for m in models)
@@ -113,7 +110,6 @@ def test_catalog_helpers():
     assert catalog.model_info("anthropic/definitely-not-a-model") is None
 
 
-# ── provider gate ─────────────────────────────────────────────────────────────
 def test_provider_missing_key_message_points_to_the_app(monkeypatch):
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     with pytest.raises(MissingAPIKey) as e:
@@ -126,7 +122,6 @@ def test_local_provider_needs_no_key():
     assert p.ensure_ready() == []
 
 
-# ── config: MCP servers in config.toml ────────────────────────────────────────
 def test_config_parses_mcp_servers(tmp_path):
     (tmp_path / "config.toml").write_text(
         '[[mcp.servers]]\nname = "fs"\ncommand = "npx"\nargs = ["-y", "server"]\ntrusted = true\n')
@@ -141,7 +136,6 @@ def test_config_rejects_incomplete_mcp_server(tmp_path):
         load_config(tmp_path / "config.toml")
 
 
-# ── thread safety (the TUI runs the agent in a worker thread) ─────────────────
 def test_state_store_usable_across_threads(tmp_path):
     store = StateStore.open(tmp_path / "s.db")
     errors = []
@@ -183,7 +177,6 @@ def test_logger_sinks_and_concurrent_writes(tmp_path):
     assert len(seen) == 50 and all(r["token"] == "«redacted»" for r in seen)
 
 
-# ── agent loop fixes ──────────────────────────────────────────────────────────
 def _agent(provider, **kw):
     cfg = Config()
     cfg.logging.console = False
@@ -244,7 +237,6 @@ def test_cancel_stops_the_turn():
     assert agent.run("again").reason == "stop"           # next turn starts clean
 
 
-# ── redaction precision ───────────────────────────────────────────────────────
 def test_redaction_replaces_exact_span_only():
     v = Vault.open()
     text = "token=token12345abc"                         # secret text also appears in the prefix
@@ -252,7 +244,6 @@ def test_redaction_replaces_exact_span_only():
     assert out.startswith("token=") and "token12345abc" not in out
 
 
-# ── EngineSession ─────────────────────────────────────────────────────────────
 def test_session_chat_multi_turn_with_tool(make_session):
     llm = ScriptedLLM([call("recall_target", host="app.lab"), say("first"), say("second")])
     s = make_session(llm, targets=["app.lab"])
@@ -356,7 +347,6 @@ def test_session_context_stats(make_session):
     assert Path(st["run_dir"]).is_absolute()
 
 
-# ── MCP against a real stdio server ───────────────────────────────────────────
 MCP_SERVER = '''
 from mcp.server import MCPServer
 server = MCPServer("demo")
@@ -428,7 +418,6 @@ def test_mcp_connect_enabled_reports_per_server(make_session, mcp_server_script)
     assert results["ghost"].startswith("error")
 
 
-# ── CLI ───────────────────────────────────────────────────────────────────────
 def _run_cli(argv):
     from autopwn.cli import main
     with pytest.raises(SystemExit) as e:
@@ -485,7 +474,6 @@ def test_every_default_path_respects_autopwn_home(isolated_home):
     assert CredentialStore().dir == config_dir()
 
 
-# ── OpenRouter live catalog (mocked — the suite never needs the network) ──────
 _OR_FIXTURE = {"data": [
     {"id": "openrouter/free", "context_length": 200000, "supported_parameters": ["tools", "temperature"],
      "pricing": {"prompt": "0", "completion": "0"}},
@@ -567,7 +555,6 @@ def test_openrouter_catalog_offline_falls_back(monkeypatch):
     catalog._live.clear()
 
 
-# ── provider errors become actionable messages ────────────────────────────────
 def test_rate_limit_on_free_model_suggests_the_free_router():
     import litellm
 
@@ -596,7 +583,6 @@ def test_transient_errors_are_retried():
     import tenacity  # noqa: F401  — LiteLLM's retries need it; without it every error is masked
 
 
-# ── a connected provider is used when the default one has no key ──────────────
 def _creds_with(tmp_path, **keys):
     store = CredentialStore(tmp_path / "creds", key=Fernet.generate_key())
     for pid, k in keys.items():

@@ -57,7 +57,6 @@ CREATE INDEX IF NOT EXISTS idx_ep_target ON episodes(target_key, at);
 """
 
 
-# ── encryption ────────────────────────────────────────────────────────────────
 class _Cipher:
     def __init__(self, key: bytes):
         from cryptography.fernet import Fernet
@@ -93,7 +92,6 @@ def _resolve_key(db_path: Path, key: bytes | str | None) -> bytes:
     return new_key
 
 
-# ── diff result ───────────────────────────────────────────────────────────────
 @dataclass
 class FindingsDelta:
     new: list[str]            # finding ids seen now but not before
@@ -105,8 +103,6 @@ class FindingsDelta:
         return (f"{len(self.new)} new · {len(self.fixed)} fixed · "
                 f"{len(self.reopened)} reopened · {len(self.unchanged)} unchanged")
 
-
-# ── the store ─────────────────────────────────────────────────────────────────
 
 def _locked(fn):
     """Serialize access to the shared SQLite connection. The engine runs the agent
@@ -151,7 +147,6 @@ class TargetMemory:
                                (str(SCHEMA_VERSION),))
             self._conn.commit()
 
-    # ── encrypted KV ──────────────────────────────────────────────────────────
     @_locked
     def remember(self, target_key: str, key: str, value: Any, *, run_id: str | None = None) -> None:
         self._conn.execute(
@@ -182,7 +177,6 @@ class TargetMemory:
             " UNION SELECT DISTINCT target_key FROM episodes").fetchall()
         return sorted(r[0] for r in rows)
 
-    # ── findings history + diff ───────────────────────────────────────────────
     @_locked
     def record_findings(self, target_key: str, findings: list[Finding], *, run_id: str | None = None):
         """Persist this run's verified findings and return the delta vs last run.

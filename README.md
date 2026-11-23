@@ -1,14 +1,6 @@
 <div align="center">
 
-```
- █████  ██    ██ ████████  ██████  ██████  ██     ██ ███    ██     █████  ██
-██   ██ ██    ██    ██    ██    ██ ██   ██ ██     ██ ████   ██    ██   ██ ██
-███████ ██    ██    ██    ██    ██ ██████  ██  █  ██ ██ ██  ██    ███████ ██
-██   ██ ██    ██    ██    ██    ██ ██      ██ ███ ██ ██  ██ ██    ██   ██ ██
-██   ██  ██████     ██     ██████  ██       ███ ███  ██   ████    ██   ██ ██
-```
-
-**Purple-Team Vulnerability Discovery Agent**
+<img src="assets/brand/logo-animated.svg" alt="AutoPwn AI" width="820">
 
 *deep detection · offensive techniques · defender-framed · safe verification*
 

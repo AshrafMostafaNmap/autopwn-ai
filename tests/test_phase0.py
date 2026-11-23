@@ -25,7 +25,6 @@ from autopwn.llm.provider import (
 )
 
 
-# ── config ───────────────────────────────────────────────────────────────────
 def test_defaults_without_file(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)          # no config.toml here
     monkeypatch.delenv("AUTOPWN_CONFIG", raising=False)
@@ -64,7 +63,6 @@ def test_api_key_resolves_from_env(monkeypatch):
     assert llm.api_key() == "sk-secret"
 
 
-# ── store ────────────────────────────────────────────────────────────────────
 def _finding(fid="F-1", status=Status.VERIFIED, score=9.1):
     return Finding(
         id=fid, title="SQLi in login", target=Target(host="juice.company.lab", url="/login"),
@@ -115,7 +113,6 @@ def test_store_targets():
     assert json.loads(rows[0]["fingerprint"])["stack"] == "LAMP"
 
 
-# ── run context ──────────────────────────────────────────────────────────────
 def test_run_id_shape():
     rid = new_run_id()
     assert len(rid.split("-")) == 3        # date-time-short
@@ -149,7 +146,6 @@ def test_config_snapshot_has_no_secret_value(tmp_path, monkeypatch):
     ctx.finish()
 
 
-# ── logging redaction ────────────────────────────────────────────────────────
 def test_redact_nested():
     out = redact({"api_key": "x", "nested": {"cookie": "y", "ok": 1}, "list": [{"token": "z"}]})
     assert out["api_key"] == "«redacted»"
@@ -158,7 +154,6 @@ def test_redact_nested():
     assert out["list"][0]["token"] == "«redacted»"
 
 
-# ── LLM adapter types + gate (no network) ────────────────────────────────────
 def test_message_openai_shape():
     m = Message.assistant(tool_calls=[ToolCall(id="c1", name="nmap", arguments={"host": "h"})])
     d = m.to_openai()

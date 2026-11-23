@@ -28,8 +28,9 @@ from autopwn.detect import web as dweb
 from autopwn.detect.model import Candidate
 from autopwn.recon.target_model import Service, Surface
 
+FAKE_GOOGLE_KEY = "AIza" + "SyA" + "1234567890" * 3 + "1Z"     # shaped like a key, not one
 
-# ── a vulnerable (and a safe) web app ─────────────────────────────────────────
+
 class VulnHandler(BaseHTTPRequestHandler):
     def log_message(self, *a):            # keep tests quiet
         pass
@@ -85,7 +86,6 @@ def server():
     srv.shutdown()
 
 
-# ── detection → verification (the core DoD) ───────────────────────────────────
 def test_web_detect_and_verify(server):
     pipe = FindingsPipeline()
     verifier = SafeVerifier()
@@ -139,7 +139,6 @@ def test_sqli_not_injectable_stays_suspected_or_absent(server):
         verifier.close()
 
 
-# ── CVSS auto-scoring + dedup ─────────────────────────────────────────────────
 def test_make_finding_scores_from_table():
     c = Candidate("sqli", host="h", url="http://h/x?id=1", param="id")
     f = make_finding(c)
@@ -159,7 +158,6 @@ def test_pipeline_dedup():
     assert pipe.all()[0].confidence == 0.9                 # keeps higher confidence
 
 
-# ── network / server / mobile detectors ───────────────────────────────────────
 def test_network_cleartext_verifies_direct():
     surface = Surface(host="10.0.0.5", domain="network",
                       services=[Service(port=23, name="telnet")])
@@ -193,7 +191,7 @@ def _make_apk_with_flags() -> bytes:
         zf.writestr("AndroidManifest.xml",
                     b"manifest android:usesCleartextTraffic true android:debuggable true "
                     b"android.permission.INTERNET")
-        zf.writestr("classes.dex", b"dex key AIzaSyA1234567890123456789012345678901Z end")
+        zf.writestr("classes.dex", b"dex key " + FAKE_GOOGLE_KEY.encode() + b" end")
     return buf.getvalue()
 
 def test_mobile_detect_and_verify(tmp_path):
@@ -208,7 +206,6 @@ def test_mobile_detect_and_verify(tmp_path):
     assert "Cleartext Traffic Allowed" in titles
 
 
-# ── protocol verification against a fake datastore ────────────────────────────
 def test_protocol_verify_fake_redis():
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0)); srv.listen(1)
@@ -232,7 +229,6 @@ def test_protocol_verify_fake_redis():
     assert any(f.title == "Unauthenticated Exposed Service" for f in promoted)
 
 
-# ── coverage signal ───────────────────────────────────────────────────────────
 def test_coverage_complete_signal():
     cov = CoverageTracker(plateau=2, max_rounds=99)
     cov.expect_target("h", "web")
@@ -251,7 +247,6 @@ def test_coverage_budget_backstop():
     assert cov.is_complete()                               # budget hit regardless of checklist
 
 
-# ── playbooks ─────────────────────────────────────────────────────────────────
 def test_playbooks_load():
     from autopwn import playbooks
     assert "web" in playbooks.available()

@@ -44,7 +44,6 @@ def to_markdown(data: ReportData) -> str:
     if m.goal:
         L.append(f"**Objective:** {m.goal}")
     L.append("")
-    # summary
     L.append("## Summary")
     L.append("")
     c = data.counts
@@ -64,7 +63,6 @@ def to_markdown(data: ReportData) -> str:
         L.append(f"| {i} | {priority_of(f)} | {f.severity.rating.value} | "
                  f"{f.severity.cvss_score} | {f.title} | {where} |")
     L.append("")
-    # findings
     L.append("## Findings")
     for i, f in enumerate(data.findings, 1):
         L.append("")
