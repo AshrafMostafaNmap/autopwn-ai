@@ -202,3 +202,23 @@ def test_template_scan_needs_templates(make_session, fake_bins, monkeypatch):
     s = _session(make_session)
     r = _call(s, "template_scan", targets=["http://app.lab"])
     assert "no templates" in r.error and "tools update" in r.error
+
+
+def test_nuclei_groups_matchers_skips_info_and_uses_default_tags(make_session, fake_bins):
+    calls, outputs = fake_bins
+    rows = [{"template-id": "http-missing-security-headers", "matched-at": "http://app.lab", "matcher-name": h,
+             "info": {"name": "HTTP Missing Security Headers", "severity": "info"}}
+            for h in ("content-security-policy", "strict-transport-security", "content-security-policy")]
+    rows.append({"template-id": "generic-env", "matched-at": "http://app.lab/.env",
+                 "info": {"name": "Generic Env File Disclosure", "severity": "high"}})
+    outputs["nuclei"] = "\n".join(json.dumps(r) for r in rows) + "\n"
+    s = _session(make_session)
+    r = _call(s, "template_scan", targets=["http://app.lab"])
+    argv = calls[-1][1]
+    assert argv[argv.index("-tags") + 1] == sc.NUCLEI_DEFAULT_TAGS and "-pt" in argv
+    headers = next(m for m in r.data["matches"] if m["template"] == "http-missing-security-headers")
+    assert headers["matchers"] == ["content-security-policy", "strict-transport-security"]
+    assert len(r.data["matches"]) == 2
+    assert [f.title for f in s.findings()] == ["Generic Env File Disclosure"]     # info stays out
+    _call(s, "template_scan", targets=["http://app.lab"], full=True)
+    assert "-tags" not in calls[-1][1]

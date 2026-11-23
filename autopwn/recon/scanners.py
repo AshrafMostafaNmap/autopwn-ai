@@ -20,6 +20,7 @@ from .runner import available, run
 from .target_model import Service, Surface
 
 NUCLEI_EXCLUDED_TAGS = "dos,intrusive,fuzz,fuzzing,bruteforce,brute-force,rce,lfi,file-upload,takeover,headless"
+NUCLEI_DEFAULT_TAGS = "exposure,misconfig,panel,tech"
 NUCLEI_CVSS = {"critical": 9.5, "high": 7.5, "medium": 5.3, "low": 3.1, "info": 0.0, "unknown": 0.0}
 RATE = "20"
 MAX_ITEMS = 200
@@ -285,51 +286,62 @@ def register_scanner_tools(registry: ToolRegistry, *, ctx=None, vault=None, reda
         if tags:
             argv += ["-tags", ",".join(tags) if isinstance(tags, list) else str(tags)]
         elif not args.get("full"):
-            argv += ["-as"]                # detect the tech stack, run only the templates that fit it
+            argv += ["-tags", NUCLEI_DEFAULT_TAGS]
         res = run("nuclei", argv, input_text="\n".join(targets) + "\n", timeout=900, vault=vault)
         rows = _jsonl(res.stdout)
         if not rows and not res.ok:
             return _failed(res)
-        findings = []
+        findings: list[dict] = []
+        grouped: dict[tuple[str, str], dict] = {}
         for r in rows[:MAX_ITEMS]:
+            key = (str(r.get("template-id") or ""), str(r.get("matched-at") or r.get("host") or ""))
+            g = grouped.get(key)
+            if g is None:
+                grouped[key] = {"row": r, "matchers": [m for m in [r.get("matcher-name")] if m]}
+            elif r.get("matcher-name") and r["matcher-name"] not in g["matchers"]:
+                g["matchers"].append(r["matcher-name"])        # one result per template+URL
+        added = 0
+        for (template, matched), g in grouped.items():
+            r, matchers = g["row"], g["matchers"]
             info = r.get("info") or {}
             sev = str(info.get("severity", "unknown")).lower()
             cls = info.get("classification") or {}
-            cwe = (cls.get("cwe-id") or [""])
-            matched = r.get("matched-at") or r.get("host") or ""
-            item = {"template": r.get("template-id"), "name": info.get("name"), "severity": sev,
-                    "matched_at": matched, "extracted": (r.get("extracted-results") or [])[:5],
-                    "cve": cls.get("cve-id") or []}
-            findings.append(item)
-            if pipeline is not None:
-                req = redactor.scrub(str(r.get("request") or "")[:2000]) if redactor else ""
-                resp = redactor.scrub(str(r.get("response") or "")[:2000]) if redactor else ""
-                pipeline.add(Candidate(
-                    "template_finding", host=host_of(matched), url=matched if "://" in matched else "",
-                    confidence=0.85, method="direct", key=str(r.get("template-id") or ""),
-                    title=str(info.get("name") or r.get("template-id")),
-                    cvss=float((cls.get("cvss-score") or NUCLEI_CVSS.get(sev, 0.0)) or 0.0),
-                    cwe=(cwe[0] if isinstance(cwe, list) and cwe else str(cwe or "")).upper(),
-                    description=str(info.get("description") or "")[:1000],
-                    remediation=str(info.get("remediation") or "")[:1000],
-                    references=list(info.get("reference") or [])[:5],
-                    note=f"nuclei template {r.get('template-id')} matched"
-                         + (f" ({r.get('matcher-name')})" if r.get("matcher-name") else ""),
-                    evidence_request=req, evidence_response=resp,
-                    steps=[f"nuclei -id {r.get('template-id')} -u {matched}"]))
+            cwe = cls.get("cwe-id") or [""]
+            name = str(info.get("name") or template)
+            findings.append({"template": template, "name": name, "severity": sev, "matched_at": matched,
+                             "matchers": matchers, "extracted": (r.get("extracted-results") or [])[:5],
+                             "cve": cls.get("cve-id") or []})
+            if pipeline is None or sev in ("info", "unknown"):
+                continue                     # informational matches stay in the output, not the report
+            req = redactor.scrub(str(r.get("request") or "")[:2000]) if redactor else ""
+            resp = redactor.scrub(str(r.get("response") or "")[:2000]) if redactor else ""
+            detail = f" ({', '.join(matchers)})" if matchers else ""
+            pipeline.add(Candidate(
+                "template_finding", host=host_of(matched), url=matched if "://" in matched else "",
+                confidence=0.85, method="direct", key=template, title=name,
+                cvss=float((cls.get("cvss-score") or NUCLEI_CVSS.get(sev, 0.0)) or 0.0),
+                cwe=(cwe[0] if isinstance(cwe, list) and cwe else str(cwe or "")).upper(),
+                description=str(info.get("description") or "")[:1000],
+                remediation=str(info.get("remediation") or "")[:1000],
+                references=list(info.get("reference") or [])[:5],
+                note=f"nuclei template {template} matched{detail}",
+                evidence_request=req, evidence_response=resp,
+                steps=[f"nuclei -id {template} -u {matched}"]))
+            added += 1
         store("template_scan", rows)
         by_sev: dict[str, int] = {}
         for f in findings:
             by_sev[f["severity"]] = by_sev.get(f["severity"], 0) + 1
         summary = ", ".join(f"{n} {s}" for s, n in sorted(by_sev.items(), key=lambda x: -NUCLEI_CVSS.get(x[0], 0)))
-        return ToolResult(content=f"nuclei: {len(findings)} match(es)" + (f" — {summary}" if summary else "")
-                          + "; added to findings as suspected — run verify_findings next",
+        tail = (f"; {added} added to findings as suspected — run verify_findings next" if added
+                else "; nothing above informational")
+        return ToolResult(content=f"nuclei: {len(findings)} result(s)" + (f" — {summary}" if summary else "") + tail,
                           data={"matches": findings})
 
     registry.add("template_scan",
                  "Scan with nuclei's community templates for known CVEs, exposures and misconfigurations. "
-                 "By default it fingerprints the stack and runs only matching templates (fast); pass tags "
-                 "to focus or full=true for everything. Safe mode: DoS, fuzzing, brute-force, RCE, LFI, "
+                 "By default it runs the exposure, misconfiguration, admin-panel and technology checks; "
+                 "pass tags to focus (e.g. ['cve'] for a CVE sweep) or full=true for everything (slow). Safe mode: DoS, fuzzing, brute-force, RCE, LFI, "
                  "upload and takeover templates are excluded; rate-limited. Matches become suspected findings.",
                  template_scan, phase="detection",
                  parameters={"type": "object", "properties": {
@@ -340,7 +352,7 @@ def register_scanner_tools(registry: ToolRegistry, *, ctx=None, vault=None, reda
                               "description": "limit to template tags, e.g. ['cve','exposure','misconfig']"},
                      "full": {"type": "boolean",
                               "description": "run every safe HTTP template (slow) instead of the "
-                                             "technology-matched set used by default"}},
+                                             "default exposure/misconfig/panel/tech set"}},
                      "required": ["targets"]})
 
     registry.mark_scoped(active=("http_probe", "crawl", "content_discovery", "template_scan"),

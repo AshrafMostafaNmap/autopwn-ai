@@ -182,8 +182,13 @@ falls back to built-in Python checks when they are not:
 | `network_scan` | nmap → naabu → Python | open ports and service versions |
 
 Everything runs rate-limited and time-boxed. nuclei runs in safe mode: DoS,
-fuzzing, brute-force, RCE, LFI, upload and takeover templates are excluded, and
-its matches become *suspected* findings that still go through verification.
+fuzzing, brute-force, RCE, LFI, upload and takeover templates are excluded. By
+default it runs the exposure, misconfiguration, admin-panel and technology checks
+(a few minutes per target); ask for a CVE sweep (`tags: cve`) or everything
+(`full`) when you want it. Results for the same template and URL are merged
+(e.g. one "missing security headers" result listing each header); low and above
+become *suspected* findings that still go through verification, informational ones
+stay in the tool output.
 
 ```bash
 autopwnai tools                 # what is installed, versions, how to get the rest
