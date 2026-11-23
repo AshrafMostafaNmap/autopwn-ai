@@ -30,7 +30,7 @@ The installer:
 5. offers to open the setup wizard.
 
 Options after `sh -s --`: `--yes` (system packages without asking), `--no-system`
-(never use sudo), `--no-tools` (app only), `--with-browser`, `--with-pdf`,
+(never use sudo), `--no-tools` (app only), `--with-pdf`,
 `--ref <tag>`, `--uninstall`. Run it again to update.
 
 From a checkout instead: `sh install.sh --from .`, or for development
@@ -214,6 +214,45 @@ They go into `~/.local/share/autopwn/bin` (or `$AUTOPWN_HOME/data/bin`). nmap,
 dig and openssl come from your system's package manager — the command for your
 system is printed.
 
+### The browser (DevTools for the agent)
+
+AutoPwn drives a real headless browser — Playwright's Chromium, or the Chrome /
+Chromium already on your machine — so JavaScript apps, `#/routes` and API calls
+are tested the way a person with DevTools would. Every tool is scope-gated: the
+browser checks each navigation **and every redirect hop** against scope, and never
+follows logout / delete / reset-style links.
+
+| DevTools tab | tool | what the agent gets |
+|---|---|---|
+| Elements | `browser_dom`, `browser_snapshot` | forms and fields (hidden too), links, iframes, meta, HTML comments, event handlers; clickable element refs |
+| Console | `browser_console` | messages and uncaught errors (stack traces, leaked paths) |
+| Sources | `browser_sources` | every script, API endpoints in the code, downloadable source maps, secrets in JS |
+| Network | `browser_network` | requests/responses (credentials redacted), the XHR/fetch **API map**, websockets |
+| Performance · Memory | `browser_performance` | timing, resources, DOM size, JS heap, listeners |
+| **Application** | `browser_application` | cookies + flags, Local/Session Storage, IndexedDB, Cache Storage, service workers, manifest, frames |
+| Security | `browser_security` | TLS protocol and certificate, security headers, CSP, CORS, mixed content |
+| Recorder | `browser_open`, `browser_click`, `browser_fill`, `browser_press`, `browser_login`, `browser_screenshot` | explore flows, sign in with a test account, capture evidence |
+
+On top of them:
+
+- **`browser_crawl`** — every page in scope, JavaScript-rendered, with forms,
+  parameters and the API map;
+- **`browser_audit`** — a passive audit of everything seen: headers, CSP, CORS
+  with credentials, cookie flags, tokens in storage, vulnerable JS libraries,
+  secrets in bundles, exposed source maps, console leaks, mixed content;
+- **`browser_dom_xss`** — safe DOM-XSS proof: a harmless `<i id=marker>` goes into
+  each query/`#fragment` parameter; the page creating that element is the proof,
+  no script runs;
+- **`web_deep_scan`** — the whole web methodology in one call: fingerprint → live
+  check → browser crawl → client-side audit → security overview → DOM-XSS on every
+  parameterised page → sensitive paths → nuclei → server-side checks on every
+  parameterised URL and API → verification.
+
+Values that look secret (session cookies, tokens in storage) are returned to the
+model only as `«secret:…»` placeholders. For authenticated testing, store the test
+account's password in the vault and let the agent call `browser_login`; the session
+is saved under `runs/<id>/browser/` for the rest of the run.
+
 ## 7. MCP servers
 
 `/mcp` lists your servers. **Enter** connects / disconnects, **p** adds a
@@ -268,7 +307,9 @@ log. Scope is fixed when the server starts:
 }
 ```
 
-Without `--authorize` only passive tools run.
+Without `--authorize` only passive tools run. `--toolset browser` serves only the
+browser tools (plus `web_deep_scan`, findings and reports) — a full DevTools-style
+browser MCP server; `--toolset web` adds the web scanners and detection.
 
 ## 8. Findings, reports, memory, context
 
@@ -391,6 +432,6 @@ Set `AUTOPWN_HOME` to keep everything under one directory instead.
 | "not found or this API key cannot access it" | the key is wrong or the model is not on your plan (Fireworks reports both this way) |
 | MCP server "error" in `/mcp` | check the command/arguments; details in `runs/<id>/mcp-<name>.log` |
 | PDF skipped in `/report` | `pip install ".[pdf]"` plus pango/cairo |
-| browser tool unavailable | reinstall with `install.sh --with-browser` |
+| browser tool unavailable | `autopwnai tools install browser` |
 | "blocked by the scope gate" | the target is not in scope or not authorized — `/scope` |
 | "nuclei is not installed" (or another scanner) | `autopwnai tools install` |

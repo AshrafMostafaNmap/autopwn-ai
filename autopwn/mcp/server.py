@@ -17,11 +17,23 @@ from ..llm.provider import ToolCall
 HIDDEN = frozenset({"advance_phase", "finish", "record_observation"})
 
 
-def exposed_tools(session) -> list:
-    return [t for t in session.registry.tools() if t.source == "native" and t.name not in HIDDEN]
+WEB = frozenset({"web_recon", "http_probe", "crawl", "content_discovery", "template_scan", "subdomain_discovery",
+                 "known_urls", "dns_records", "dns_lookup", "tls_inspect", "detect_web", "verify_findings",
+                 "list_findings", "generate_report", "coverage_status", "get_playbook", "web_deep_scan"})
+TOOLSETS = ("all", "web", "browser")
 
 
-def build_server(session):
+def exposed_tools(session, toolset: str = "all") -> list:
+    tools = [t for t in session.registry.tools() if t.source == "native" and t.name not in HIDDEN]
+    if toolset == "browser":
+        return [t for t in tools if t.name.startswith("browser_") or t.name in ("web_deep_scan", "verify_findings",
+                                                                               "list_findings", "generate_report")]
+    if toolset == "web":
+        return [t for t in tools if t.name.startswith("browser_") or t.name in WEB]
+    return tools
+
+
+def build_server(session, toolset: str = "all"):
     from mcp import types
     from mcp.server.lowlevel import Server
 
@@ -29,19 +41,22 @@ def build_server(session):
 
     scope = ", ".join(session.targets) or "nothing"
     instructions = (
-        "AutoPwn AI purple-team tools. Only targets in scope can be tested "
+        f"AutoPwn AI purple-team tools ({toolset} toolset). Only targets in scope can be tested "
         f"(in scope: {scope}); calls outside it are refused. Verification is non-destructive. "
-        "Typical flow: http_probe / web_recon / network_scan → detect_* / template_scan → "
+        "Typical web flow: web_deep_scan(url) for the full assessment, then browser_open / browser_snapshot / "
+        "browser_click / browser_fill to explore, browser_network / browser_sources / browser_application / "
+        "browser_security / browser_console to inspect like DevTools, browser_dom_xss and detect_web to test, "
         "verify_findings → list_findings → generate_report.")
 
     async def list_tools(_ctx, _params):
         return types.ListToolsResult(tools=[
             types.Tool(name=t.name, description=t.description,
                        input_schema=t.parameters or {"type": "object", "properties": {}})
-            for t in exposed_tools(session)])
+            for t in exposed_tools(session, toolset)])
 
     async def call_tool(_ctx, params):
-        if params.name in HIDDEN or session.registry.get(params.name) is None:
+        allowed = {t.name for t in exposed_tools(session, toolset)}
+        if params.name not in allowed:
             return types.CallToolResult(content=[types.TextContent(type="text", text=f"unknown tool {params.name}")],
                                         is_error=True)
         call = ToolCall("mcp", params.name, dict(params.arguments or {}))
@@ -55,8 +70,8 @@ def build_server(session):
                   instructions=instructions, on_list_tools=list_tools, on_call_tool=call_tool)
 
 
-async def serve_stdio(session) -> None:
+async def serve_stdio(session, toolset: str = "all") -> None:
     from mcp.server.stdio import stdio_server
-    server = build_server(session)
+    server = build_server(session, toolset)
     async with stdio_server() as (read, write):
         await server.run(read, write, server.create_initialization_options())

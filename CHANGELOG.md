@@ -10,6 +10,12 @@ First public release.
   local Ollama / LM Studio and any OpenAI-compatible server; keys verified with the
   provider and stored encrypted.
 - Hard scope gate enforced in code (hosts, wildcards, CIDR, exclusions, authorization).
+- Real browser for the agent (headless Chromium/Chrome): one tool per DevTools tab —
+  Elements, Console, Sources, Network, Performance/Memory, Application, Security —
+  plus a JS-aware crawler, a passive client-side audit, safe DOM-XSS proofs, login
+  with vaulted credentials, and `web_deep_scan`; navigation and every redirect hop
+  are scope-checked. Nine new client-side vulnerability classes.
+- `autopwnai mcp-serve --toolset browser|web|all`.
 - Scanner integration: nuclei, httpx, subfinder, katana, dnsx, naabu, ffuf, gau, nmap;
   `autopwnai tools` installs them from official releases with SHA-256 verification.
 - Safe, non-destructive verification; only verified findings are reported.

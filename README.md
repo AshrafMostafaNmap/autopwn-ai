@@ -52,6 +52,11 @@ tool bundled, and connects to **any** LLM provider you choose.
 - **Real scanners, safely** — nuclei, httpx, subfinder, katana, dnsx, naabu, ffuf,
   gau and nmap, rate-limited and time-boxed; `autopwnai tools install` fetches them
   (official releases, SHA-256 verified, no root).
+- **A real browser, DevTools-style** — headless Chromium/Chrome with tools for every
+  tab: Elements, Console, Sources, Network (API map), Performance/Memory,
+  **Application** (cookies, storage, IndexedDB, service workers) and Security; a
+  JS-aware crawler, a client-side audit, safe DOM-XSS proofs and `web_deep_scan`,
+  the full web workflow in one call.
 - **Hard scope gate** — enforced in code for every tool: hosts, `*.wildcards`, CIDR,
   out-of-scope exclusions, and an authorization ack for active testing.
 - **Verified findings only** — non-destructive proofs (reflection, boolean/time
@@ -93,7 +98,7 @@ nmap, dig and openssl through your package manager, the only step that uses sudo
 Finally it offers to open the setup wizard. Options go after `sh -s --`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/AshrafMostafaNmap/autopwn-ai/main/install.sh | sh -s -- --with-browser
+curl -fsSL https://raw.githubusercontent.com/AshrafMostafaNmap/autopwn-ai/main/install.sh | sh -s -- --yes
 ```
 
 | option | |
@@ -101,7 +106,6 @@ curl -fsSL https://raw.githubusercontent.com/AshrafMostafaNmap/autopwn-ai/main/i
 | `--yes` | install nmap / dig / openssl without asking |
 | `--no-system` | never use sudo (scanners only) |
 | `--no-tools` | the app only; scanners later with `autopwnai tools install` |
-| `--with-browser` | Playwright browser recon (downloads Chromium) |
 | `--with-pdf` | PDF reports (needs pango/cairo) |
 | `--ref v0.1.0` | a specific release or branch |
 | `--uninstall` | remove it (settings and keys are kept) |
@@ -167,6 +171,7 @@ autopwnai run "assess juice.company.lab for SQLi and XSS, then report" \
     -t juice.company.lab --authorize # one-shot, prints the result
 autopwnai tools install              # scanners: nuclei, httpx, subfinder, katana, dnsx, naabu, ffuf, gau
 autopwnai mcp-serve -t app.lab --authorize   # AutoPwn's tools for any MCP client
+autopwnai mcp-serve -t app.lab --authorize --toolset browser   # just the browser / DevTools server
 autopwnai eval                       # offline benchmark harness
 ```
 

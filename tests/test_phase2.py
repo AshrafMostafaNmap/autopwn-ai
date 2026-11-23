@@ -183,11 +183,8 @@ def test_register_recon_tools():
     reg = ToolRegistry()
     v = Vault.open()
     register_recon_tools(reg, ctx=None, vault=v, redactor=Redactor(v), target_model=TargetModel())
-    for name in ("web_recon", "dns_lookup", "network_scan", "tls_inspect",
-                 "apk_inventory", "browser_capture"):
+    for name in ("web_recon", "dns_lookup", "network_scan", "tls_inspect", "apk_inventory"):
         assert name in reg
-    # browser tool is gated (launches a browser)
-    assert reg.get("browser_capture").requires_approval is True
     # missing required arg → clean structured failure
     from autopwn.llm.provider import ToolCall
     assert reg.dispatch(ToolCall("c", "web_recon", {})).ok is False

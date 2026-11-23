@@ -11,7 +11,7 @@ from ..govern import Redactor, Vault
 from . import mobile, network, server, web
 from .target_model import TargetModel
 
-ACTIVE_RECON = ("web_recon", "network_scan", "tls_inspect", "browser_capture")
+ACTIVE_RECON = ("web_recon", "network_scan", "tls_inspect")
 PASSIVE_RECON = ("dns_lookup",)
 
 
@@ -128,34 +128,6 @@ def register_recon_tools(
         parameters={"type": "object",
                     "properties": {"path": {"type": "string", "description": "local path to the .apk"}},
                     "required": ["path"]},
-    )
-
-    def browser_capture(args: dict[str, Any], _ctx) -> ToolResult:
-        url = args.get("url")
-        if not url:
-            return ToolResult.fail("'url' is required")
-        from .browser import BrowserSession
-        sess = BrowserSession(storage_state=args.get("storage_state"))
-        try:
-            surface, cap = sess.capture(url, vault=vault, redactor=redactor)
-        except RuntimeError as e:
-            return ToolResult.fail(str(e))        # Playwright not installed → clean message
-        finally:
-            sess.close()
-        raw = {"url": cap.url, "title": cap.title, "cookies": cap.cookies,
-               "links": cap.links, "requests": cap.requests}
-        return _emit("browser_capture", surface, raw)
-
-    registry.add(
-        "browser_capture",
-        "Render a page in a real browser: read client-side DOM, links, network, "
-        "and cookies (values vaulted). Optional 'storage_state' loads the "
-        "operator's authenticated session. Requires Playwright.",
-        browser_capture, phase="recon", requires_approval=True,   # launches a browser → gate
-        parameters={"type": "object",
-                    "properties": {"url": {"type": "string"},
-                                   "storage_state": {"type": "string", "description": "path to a Playwright storage_state.json (operator's auth session)"}},
-                    "required": ["url"]},
     )
 
     registry.mark_scoped(active=ACTIVE_RECON, passive=PASSIVE_RECON)

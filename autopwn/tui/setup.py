@@ -39,7 +39,7 @@ from ..ui.theme import FAINT, GRAY, GREEN, ORANGE, RED, WHITE
 STEPS = ("welcome", "providers", "keys", "model", "prefs", "done")
 TITLES = {"welcome": "Welcome", "providers": "Providers", "keys": "Keys", "model": "Model",
           "prefs": "Preferences", "done": "Ready"}
-SUGGESTED_MCP = ("fetch", "thinking", "time", "browser", "knowledge-graph")
+SUGGESTED_MCP = ("fetch", "thinking", "time", "knowledge-graph")
 MODELS_PER_PROVIDER = 6
 
 

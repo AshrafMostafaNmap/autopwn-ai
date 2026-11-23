@@ -5,7 +5,6 @@
 #
 # Options (after `sh -s --` when piped):
 #   --ref <tag|branch>   install a specific version (default: main)
-#   --with-browser       add Playwright browser recon (downloads Chromium)
 #   --with-pdf           add PDF reports (needs pango/cairo system libraries)
 #   --from <path|url>    install from a local checkout or another git URL
 #   --no-tools           skip the scanners (install later: autopwnai tools install)
@@ -17,8 +16,9 @@
 # It detects the system, installs uv (https://docs.astral.sh/uv) if missing, then
 # the `autopwnai` command into an isolated environment with its own Python, then
 # the scanners it drives: nuclei, httpx, subfinder, katana, dnsx, naabu, ffuf and
-# gau from their official releases (SHA-256 verified, no root), and — after asking
-# — nmap, dig and openssl through your package manager (the only step using sudo).
+# gau from their official releases (SHA-256 verified, no root), a headless browser
+# for the browser tools (your Chrome/Chromium, or a Chromium download), and — after
+# asking — nmap, dig and openssl through your package manager (the only sudo step).
 set -eu
 
 REPO="${AUTOPWN_REPO:-https://github.com/AshrafMostafaNmap/autopwn-ai}"
@@ -26,7 +26,6 @@ PACKAGE="autopwn-ai"
 REF="main"
 SOURCE=""
 EXTRAS=""
-BROWSER=0
 RUN_SETUP=1
 UNINSTALL=0
 TOOLS=1
@@ -48,7 +47,7 @@ while [ $# -gt 0 ]; do
     case "$1" in
         --ref) [ $# -ge 2 ] || fail "--ref needs a value"; REF="$2"; shift 2 ;;
         --from) [ $# -ge 2 ] || fail "--from needs a value"; SOURCE="$2"; shift 2 ;;
-        --with-browser) add_extra browser; BROWSER=1; shift ;;
+        --with-browser) shift ;;                       # the browser is always installed now
         --with-pdf) add_extra pdf; shift ;;
         --no-setup) RUN_SETUP=0; shift ;;
         --no-tools) TOOLS=0; shift ;;
@@ -132,15 +131,8 @@ step "installing $SPEC from ${TARGET#git+}  ${D}(first install downloads ~100 MB
 "$UV" tool install --force --python ">=3.12" "$SPEC @ $TARGET" || fail "installation failed (see the output above)"
 
 BIN_DIR="$("$UV" tool dir --bin 2>/dev/null || echo "$HOME/.local/bin")"
-TOOL_DIR="$("$UV" tool dir)"
 APP="$BIN_DIR/autopwnai"
 [ -x "$APP" ] || fail "install finished but $APP is missing"
-
-if [ "$BROWSER" = 1 ]; then
-    step "downloading Chromium for browser recon"
-    "$TOOL_DIR/$PACKAGE/bin/python" -m playwright install chromium >/dev/null || \
-        say "${D}  could not download Chromium — run later: $TOOL_DIR/$PACKAGE/bin/python -m playwright install chromium${N}"
-fi
 
 say ""
 say "${G}✓${N} installed: $("$APP" --version 2>/dev/null || echo autopwnai)"

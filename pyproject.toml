@@ -29,11 +29,11 @@ dependencies = [
     "jinja2>=3.1",
     "mcp>=1.0",
     "tenacity>=8",          # LiteLLM retries (429 / 5xx / network)
+    "playwright>=1.40",     # the real browser behind the browser_* tools
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "pytest-asyncio>=0.23", "ruff>=0.5"]
-browser = ["playwright>=1.40"]
 pdf = ["weasyprint>=60"]
 
 [project.urls]

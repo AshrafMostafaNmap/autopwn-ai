@@ -23,6 +23,9 @@ from .agent.builtins import register_builtins
 from .agent.conversation import Conversation
 from .agent.loop import AgentResult
 from .agent.planner import Phase, methodology_for
+from .browser.engine import BrowserEngine
+from .browser.tools import register_browser_tools
+from .browser.workflow import register_workflows
 from .config import Config, apply_env_overrides, load_config
 from .core.context import RunContext
 from .core.findings import Finding
@@ -142,12 +145,16 @@ class EngineSession:
                              target_model=self.target_model)
         register_scanner_tools(self.registry, ctx=ctx, vault=self.vault, redactor=self.redactor,
                                target_model=self.target_model, pipeline=self.pipeline)
+        self._browser: BrowserEngine | None = None
+        register_browser_tools(self.registry, engine=self.browser, ctx=ctx, pipeline=self.pipeline,
+                               target_model=self.target_model, redactor=self.redactor)
         register_detection_tools(self.registry, ctx=ctx, pipeline=self.pipeline,
                                  verifier=self.verifier, coverage=self.coverage,
                                  target_model=self.target_model, redactor=self.redactor)
         register_report_tools(self.registry, ctx=ctx, pipeline=self.pipeline)
         register_memory_tools(self.registry, ctx=ctx, memory=self.memory, kb=self.kb)
         self.mcp = MCPManager(self.registry, log_dir=ctx.run_dir)
+        register_workflows(self.registry, ctx=ctx)
         self.registry.guard = ScopeGuard(lambda: list(self.ctx.targets),
                                          lambda: list(self.config.scope.out_of_scope),
                                          lambda: bool(self.config.scope.authorized_ack))
@@ -416,6 +423,15 @@ class EngineSession:
             "turns": self.turns, "run_dir": str(self.ctx.run_dir.resolve()),
         }
 
+    def browser(self) -> BrowserEngine:
+        """The session's browser, started on first use."""
+        if self._browser is None:
+            session_file = self.ctx.run_dir / "browser" / "session.json"
+            self._browser = BrowserEngine(guard=self.registry.guard, vault=self.vault,
+                                          artifacts_dir=self.ctx.run_dir / "artifacts",
+                                          storage_state=str(session_file) if session_file.is_file() else None)
+        return self._browser
+
     def findings(self) -> list[Finding]:
         return self.pipeline.all()
 
@@ -608,6 +624,8 @@ class EngineSession:
             except OSError:
                 pass
         self.mcp.close_all()
+        if self._browser is not None:
+            self._browser.close()
         for closer in (self.verifier.close, self.memory.close):
             try:
                 closer()

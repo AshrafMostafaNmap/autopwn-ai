@@ -96,7 +96,7 @@ def cmd_mcp_serve(args: argparse.Namespace) -> int:
     if not args.authorize:
         print("note: not authorized — only passive tools will run (add --authorize)", file=sys.stderr)
     try:
-        anyio.run(serve_stdio, session)
+        anyio.run(serve_stdio, session, args.toolset)
     except KeyboardInterrupt:
         pass
     finally:
@@ -417,6 +417,8 @@ def build_parser() -> argparse.ArgumentParser:
     ms.add_argument("--target", "-t", action="append", help="in-scope target (repeatable; wildcards and CIDR ok)")
     ms.add_argument("--exclude", "-x", action="append", help="out-of-scope target (repeatable)")
     ms.add_argument("--domain", choices=["web", "network", "server", "mobile"], default="web")
+    ms.add_argument("--toolset", choices=["all", "web", "browser"], default="all",
+                    help="all tools, the web set (browser + scanners + detection + reports) or only the browser")
     ms.add_argument("--authorize", action="store_true",
                     help="acknowledge you are authorized to test the targets (enables active tools)")
     ms.set_defaults(func=cmd_mcp_serve)

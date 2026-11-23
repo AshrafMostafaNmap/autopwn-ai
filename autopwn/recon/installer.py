@@ -50,6 +50,7 @@ SCANNERS: dict[str, Scanner] = {s.name: s for s in [
     Scanner("naabu", "fast port discovery", "projectdiscovery/naabu"),
     Scanner("ffuf", "content discovery", "ffuf/ffuf"),
     Scanner("gau", "known URLs from public archives", "lc/gau"),
+    Scanner("browser", "headless Chromium for the browser_* tools", "playwright"),
     Scanner("nmap", "service and version detection"),
     Scanner("dig", "DNS lookups"),
     Scanner("openssl", "TLS inspection"),
@@ -89,8 +90,40 @@ def _http(token: str | None = None) -> httpx.Client:
     return httpx.Client(timeout=60.0, follow_redirects=True, headers=headers)
 
 
+def browser_path() -> str | None:
+    """Playwright's own Chromium, else a Chrome / Chromium / Edge already on the machine."""
+    cache = Path(os.environ.get("PLAYWRIGHT_BROWSERS_PATH") or Path.home() / ".cache" / "ms-playwright")
+    for pattern in ("chromium_headless_shell-*/chrome-*/headless_shell", "chromium-*/chrome-linux*/chrome",
+                    "chromium-*/chrome-mac*/Chromium.app/Contents/MacOS/Chromium"):
+        found = sorted(cache.glob(pattern))
+        if found:
+            return str(found[-1])
+    for exe in ("google-chrome-stable", "google-chrome", "chromium", "chromium-browser", "microsoft-edge"):
+        if p := shutil.which(exe):
+            return p
+    mac = Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome")
+    return str(mac) if mac.exists() else None
+
+
+def install_browser(progress: Callable[[str], None] | None = None) -> str:
+    """Download Playwright's headless Chromium (~150 MB) unless a browser is already there."""
+    say = progress or (lambda _m: None)
+    existing = browser_path()
+    if existing:
+        say(f"browser: using {existing}")
+        return existing
+    import sys
+    say("browser: downloading headless Chromium (~150 MB)")
+    res = subprocess.run([sys.executable, "-m", "playwright", "install", "chromium"], timeout=1800)
+    if res.returncode != 0 or not browser_path():
+        raise InstallError("browser: Chromium download failed — run: python -m playwright install chromium")
+    return browser_path() or ""
+
+
 def resolve(name: str) -> str | None:
     """Path of an installed scanner: AutoPwn's bin dir first, then Go's, then PATH."""
+    if name == "browser":
+        return browser_path()
     for d in (bin_dir(), Path.home() / "go" / "bin"):
         p = d / name
         if p.is_file() and os.access(p, os.X_OK):
@@ -113,6 +146,13 @@ def version_of(name: str) -> str:
     path = resolve(name)
     if not path:
         return ""
+    if name == "browser":
+        try:
+            out = subprocess.run([path, "--version"], capture_output=True, text=True, timeout=15).stdout
+        except (OSError, subprocess.SubprocessError):
+            return ""
+        m = re.search(r"(\d+\.\d+\.\d+\.\d+|\d+\.\d+\.\d+)", out)
+        return m.group(1) if m else ""
     flag = {"nmap": "--version", "openssl": "version", "dig": "-v", "ffuf": "-V", "gau": "--version"}.get(name,
                                                                                                       "-version")
     try:
@@ -152,6 +192,8 @@ def install(name: str, *, token: str | None = None, client: httpx.Client | None 
     s = SCANNERS.get(name)
     if s is None:
         raise InstallError(f"unknown scanner '{name}'")
+    if name == "browser":
+        return Path(install_browser(progress))
     if not s.downloadable:
         raise InstallError(f"{name} is a system package — install it with: {system_hint(s)}")
     say = progress or (lambda _m: None)

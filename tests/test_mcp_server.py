@@ -46,3 +46,20 @@ def test_mcp_server_without_authorization_blocks_active_tools(tmp_path):
             assert "not authorized" in str(e)
     finally:
         c.close()
+
+
+def test_mcp_browser_toolset(tmp_path):
+    c = _client(tmp_path, "-t", "127.0.0.1", "--authorize", "--toolset", "browser")
+    try:
+        names = {t["name"] for t in c.list_tools()}
+        assert {"browser_open", "browser_application", "browser_network", "browser_sources", "browser_security",
+                "browser_console", "browser_performance", "browser_crawl", "browser_dom_xss",
+                "web_deep_scan"} <= names
+        assert "network_scan" not in names and "template_scan" not in names
+        try:
+            c.invoke("network_scan", {"host": "127.0.0.1"})
+            raise AssertionError("tool outside the toolset was callable")
+        except Exception as e:
+            assert "unknown tool" in str(e)
+    finally:
+        c.close()

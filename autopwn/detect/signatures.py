@@ -68,6 +68,63 @@ VULN_CLASSES: dict[str, VulnClass] = {
         "Allow-list redirect targets; use relative paths or signed tokens, never "
         "raw user-supplied URLs."),
     # network / server
+    "dom_xss": VulnClass(
+        "dom_xss", "DOM-based Cross-Site Scripting", 6.1, "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+        "A03:2021-Injection", "CWE-79",
+        "CSP violation reports (require-trusted-types-for 'script'); client-side error monitoring for "
+        "unexpected DOM nodes; review uses of innerHTML/document.write/eval on URL-derived data.",
+        "Never write URL, hash or storage data into innerHTML/document.write; use textContent or a "
+        "sanitizer (DOMPurify); enforce Trusted Types and a strict CSP."),
+    "sensitive_client_storage": VulnClass(
+        "sensitive_client_storage", "Sensitive Data in Browser Storage", 5.3,
+        "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:N/A:N", "A04:2021-Insecure Design", "CWE-922",
+        "Client-side audits of localStorage/sessionStorage keys; flag tokens readable by any script "
+        "on the origin (one XSS steals them).",
+        "Keep session tokens in HttpOnly, Secure, SameSite cookies; never store secrets or long-lived "
+        "tokens in localStorage/sessionStorage."),
+    "vulnerable_js_library": VulnClass(
+        "vulnerable_js_library", "Vulnerable JavaScript Library", 6.1,
+        "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N", "A06:2021-Vulnerable and Outdated Components",
+        "CWE-1104",
+        "Software composition analysis of front-end bundles in CI (npm audit, retire.js); alert on "
+        "known-vulnerable versions served in production.",
+        "Upgrade the library to a fixed release; remove unused libraries; pin and audit dependencies."),
+    "exposed_source_map": VulnClass(
+        "exposed_source_map", "Exposed JavaScript Source Map", 3.7,
+        "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:L/I:N/A:N", "A05:2021-Security Misconfiguration", "CWE-540",
+        "Alert on requests for *.map files in web logs; scan deployments for published source maps.",
+        "Do not deploy .map files to production (or restrict them to internal networks)."),
+    "weak_csp": VulnClass(
+        "weak_csp", "Weak Content-Security-Policy", 4.3, "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:N/A:N",
+        "A05:2021-Security Misconfiguration", "CWE-693",
+        "Collect CSP violation reports (report-to); lint policies for unsafe-inline, unsafe-eval and "
+        "wildcard sources.",
+        "Remove 'unsafe-inline' and 'unsafe-eval'; use nonces or hashes for scripts; avoid wildcards; "
+        "add object-src 'none' and base-uri 'self'."),
+    "cors_misconfig": VulnClass(
+        "cors_misconfig", "Permissive CORS with Credentials", 6.5,
+        "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:N/A:N", "A05:2021-Security Misconfiguration", "CWE-942",
+        "Alert on responses that echo arbitrary Origin values together with "
+        "Access-Control-Allow-Credentials: true.",
+        "Allow-list exact trusted origins; never reflect the request Origin when credentials are allowed."),
+    "info_leak_console": VulnClass(
+        "info_leak_console", "Information Leak in Browser Console", 2.6,
+        "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:L/I:N/A:N", "A05:2021-Security Misconfiguration", "CWE-209",
+        "Front-end error monitoring for stack traces and internal paths logged in production builds.",
+        "Strip debug logging from production bundles; report errors to a backend collector instead of "
+        "the console."),
+    "secret_in_client_code": VulnClass(
+        "secret_in_client_code", "Secret Exposed in Client-Side Code", 7.5,
+        "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N", "A02:2021-Cryptographic Failures", "CWE-798",
+        "Secret scanning of built front-end assets in CI; watch provider logs for use of the leaked key.",
+        "Revoke and rotate the key; move it to a backend that proxies the call; never ship secrets to "
+        "the browser."),
+    "mixed_content": VulnClass(
+        "mixed_content", "Mixed Content", 4.3, "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:L/I:L/A:N",
+        "A02:2021-Cryptographic Failures", "CWE-319",
+        "Browser CSP reports (block-all-mixed-content / upgrade-insecure-requests); crawl for http:// "
+        "subresources on https pages.",
+        "Load every subresource over HTTPS; add upgrade-insecure-requests to the CSP."),
     "template_finding": VulnClass(
         "template_finding", "Template-detected issue", 5.3, "",
         "A05:2021-Security Misconfiguration", "CWE-1035",

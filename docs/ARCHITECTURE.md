@@ -316,7 +316,12 @@ AutoPwn AI/
 │   │   ├── vault.py        # local secret vault (encrypted, tokenize/inject)
 │   │   ├── redaction.py    # pattern redaction (defense in depth)
 │   │   └── audit.py        # hash-chained audit log + authorization ack
-│   ├── recon/              # cross-domain recon (web/network/server/mobile/browser)
+│   ├── browser/            # real headless browser for the agent
+│   │   ├── engine.py       # Playwright on its own thread; DevTools-style capture; scope per hop
+│   │   ├── tools.py        # browser_* tools: one per DevTools tab + crawl, audit, DOM XSS, login
+│   │   ├── checks.py       # passive client-side checks (headers, CSP, CORS, storage, libs, secrets)
+│   │   └── workflow.py     # web_deep_scan: the full web methodology in one call
+│   ├── recon/              # cross-domain recon (web/network/server/mobile)
 │   │   ├── runner.py       # safe subprocess runner (allowlist, argv-only)
 │   │   ├── scanners.py     # agent tools over httpx/subfinder/dnsx/gau/katana/ffuf/nuclei
 │   │   ├── installer.py    # `autopwnai tools`: official releases, SHA-256 verified, no root

@@ -62,7 +62,7 @@ def test_session_blocks_out_of_scope_tool_calls(make_session):
 
 def test_every_target_touching_tool_is_gated(make_session):
     s = make_session(targets=["app.lab"])
-    touching = {"web_recon", "network_scan", "tls_inspect", "browser_capture", "dns_lookup",
+    touching = {"web_recon", "network_scan", "tls_inspect", "browser_open", "dns_lookup",
                 "detect_web", "detect_network", "detect_server"}
     for name in touching:
         assert s.registry.get(name).scoped, name

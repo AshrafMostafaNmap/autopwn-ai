@@ -86,14 +86,6 @@ def scan(stored: set[str] | None = None, api_bases: dict[str, str] | None = None
         hint = "" if row["installed"] else (f"autopwnai tools install {row['name']}" if row["downloadable"]
                                             else row["system_hint"])
         out.tools.append(ToolScan(row["name"], row["purpose"], row["path"], hint))
-    try:
-        import playwright  # noqa: F401
-        browser = True
-    except ImportError:
-        browser = False
-    out.tools.append(ToolScan("playwright", "browser recon of client-side apps",
-                              "python package" if browser else None,
-                              "" if browser else "reinstall with: install.sh --with-browser"))
     out.launchers = {"uvx": bool(shutil.which("uvx")), "npx": bool(shutil.which("npx"))}
     from .system import detect
     out.system = detect().summary()

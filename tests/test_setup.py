@@ -165,5 +165,5 @@ def test_scan_reports_providers_and_tools(monkeypatch):
     found = {p.id: p.found for p in sc.providers}
     assert found["anthropic"] == "key saved" and found["groq"] == "$GROQ_API_KEY found"
     assert found["openai_compatible"] == ""                 # never borrows the OpenAI key
-    assert {t.name for t in sc.tools} >= {"nmap", "nuclei", "playwright"}
+    assert {t.name for t in sc.tools} >= {"nmap", "nuclei", "browser"}
     assert all(t.install for t in sc.tools if not t.path)

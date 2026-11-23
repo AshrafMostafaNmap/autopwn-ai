@@ -26,6 +26,7 @@ def isolated_home(tmp_path, monkeypatch):
     def no_downloads(*_a, **_k):
         raise installer.InstallError("downloads are disabled in tests")
     monkeypatch.setattr(installer, "_http", no_downloads)               # never fetch real scanners
+    monkeypatch.setattr(installer, "install_browser", no_downloads)     # nor Chromium
     return home
 
 
