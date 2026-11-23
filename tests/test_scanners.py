@@ -27,6 +27,7 @@ def fake_bins(monkeypatch):
                              stdout=outputs.get(binary, ""))
     monkeypatch.setattr(sc, "run", fake_run)
     monkeypatch.setattr(sc, "available", lambda b: True)
+    monkeypatch.setattr(installer, "template_count", lambda: 100)
     return calls, outputs
 
 
@@ -189,3 +190,15 @@ def test_sarif_report(make_session, tmp_path):
     assert res["level"] == "error" and "parameter q" in res["message"]["text"]
     rule = run["tool"]["driver"]["rules"][0]
     assert rule["id"] == res["ruleId"] and float(rule["properties"]["security-severity"]) >= 9.0
+
+
+def test_ffuf_paths_are_decoded():
+    assert sc._ffuf_input({"input": {"FUZZ": "LmVudg=="}}) == ".env"
+    assert sc._ffuf_input({"input": {"FUZZ": "admin"}, "url": "http://x/admin"}) == "admin"
+
+
+def test_template_scan_needs_templates(make_session, fake_bins, monkeypatch):
+    monkeypatch.setattr(installer, "template_count", lambda: 0)
+    s = _session(make_session)
+    r = _call(s, "template_scan", targets=["http://app.lab"])
+    assert "no templates" in r.error and "tools update" in r.error

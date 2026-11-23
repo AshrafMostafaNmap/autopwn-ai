@@ -57,6 +57,20 @@ def _failed(res) -> ToolResult:
     return ToolResult.fail(f"{res.binary} failed: {detail if isinstance(detail, str) else detail[0]}"[:400])
 
 
+def _ffuf_input(row: dict) -> str:
+    """ffuf's JSON output base64-encodes the inputs; the URL is the fallback."""
+    import base64
+    raw = str((row.get("input") or {}).get("FUZZ", ""))
+    try:
+        decoded = base64.b64decode(raw, validate=True).decode("utf-8")
+        if decoded.isprintable():
+            return decoded.lstrip("/")
+    except (ValueError, UnicodeDecodeError):
+        pass
+    url = str(row.get("url") or "")
+    return urlsplit(url).path.lstrip("/") if url else raw
+
+
 def wordlist_path() -> str:
     return str(resources.files("autopwn.recon").joinpath("wordlists/common.txt"))
 
@@ -239,7 +253,7 @@ def register_scanner_tools(registry: ToolRegistry, *, ctx=None, vault=None, reda
         rows = _jsonl(res.stdout)
         if not rows and not res.ok and res.returncode not in (0, None):
             return _failed(res)
-        hits = [{"path": "/" + str((r.get("input") or {}).get("FUZZ", "")), "status": r.get("status"),
+        hits = [{"path": "/" + _ffuf_input(r), "status": r.get("status"),
                  "length": r.get("length"), "redirect": r.get("redirectlocation", "")} for r in rows][:MAX_ITEMS]
         observe(Surface(host=host_of(url), domain="web", endpoints=[h["path"] for h in hits]))
         store("content_discovery", hits)
@@ -259,14 +273,19 @@ def register_scanner_tools(registry: ToolRegistry, *, ctx=None, vault=None, reda
             return ToolResult.fail("'targets' is required")
         if not available("nuclei"):
             return _missing("nuclei")
+        from .installer import template_count
+        if template_count() == 0:
+            return ToolResult.fail("nuclei has no templates yet — run: autopwnai tools update nuclei")
         argv = ["-jsonl", "-silent", "-nc", "-duc", "-rl", RATE, "-c", "10", "-timeout", "10",
-                "-etags", NUCLEI_EXCLUDED_TAGS]
+                "-pt", "http", "-etags", NUCLEI_EXCLUDED_TAGS]
         severity = args.get("severity")
         if severity:
             argv += ["-severity", ",".join(severity) if isinstance(severity, list) else str(severity)]
         tags = args.get("tags")
         if tags:
             argv += ["-tags", ",".join(tags) if isinstance(tags, list) else str(tags)]
+        elif not args.get("full"):
+            argv += ["-as"]                # detect the tech stack, run only the templates that fit it
         res = run("nuclei", argv, input_text="\n".join(targets) + "\n", timeout=900, vault=vault)
         rows = _jsonl(res.stdout)
         if not rows and not res.ok:
@@ -309,15 +328,19 @@ def register_scanner_tools(registry: ToolRegistry, *, ctx=None, vault=None, reda
 
     registry.add("template_scan",
                  "Scan with nuclei's community templates for known CVEs, exposures and misconfigurations. "
-                 "Safe mode: DoS, fuzzing, brute-force, RCE, LFI, upload and takeover templates are "
-                 "excluded; rate-limited. Matches become suspected findings.",
+                 "By default it fingerprints the stack and runs only matching templates (fast); pass tags "
+                 "to focus or full=true for everything. Safe mode: DoS, fuzzing, brute-force, RCE, LFI, "
+                 "upload and takeover templates are excluded; rate-limited. Matches become suspected findings.",
                  template_scan, phase="detection",
                  parameters={"type": "object", "properties": {
                      "targets": {"type": "array", "items": {"type": "string"}},
                      "severity": {"type": "array", "items": {"type": "string",
                                   "enum": ["info", "low", "medium", "high", "critical"]}},
                      "tags": {"type": "array", "items": {"type": "string"},
-                              "description": "limit to template tags, e.g. ['cve','exposure','misconfig']"}},
+                              "description": "limit to template tags, e.g. ['cve','exposure','misconfig']"},
+                     "full": {"type": "boolean",
+                              "description": "run every safe HTTP template (slow) instead of the "
+                                             "technology-matched set used by default"}},
                      "required": ["targets"]})
 
     registry.mark_scoped(active=("http_probe", "crawl", "content_discovery", "template_scan"),

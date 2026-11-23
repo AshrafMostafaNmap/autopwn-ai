@@ -56,10 +56,11 @@ case "$(uname -s)" in
 esac
 
 find_uv() {
-    if command -v uv >/dev/null 2>&1; then command -v uv; return; fi
+    if command -v uv >/dev/null 2>&1; then command -v uv; return 0; fi
     for c in "$HOME/.local/bin/uv" "$HOME/.cargo/bin/uv"; do
-        [ -x "$c" ] && { echo "$c"; return; }
+        if [ -x "$c" ]; then echo "$c"; return 0; fi
     done
+    return 0
 }
 
 if [ "$UNINSTALL" = 1 ]; then

@@ -218,14 +218,55 @@ def _extract(blob: bytes, archive: str, name: str) -> bytes:
         return fh.read()
 
 
+TEMPLATES_REPO = "https://github.com/projectdiscovery/nuclei-templates.git"
+
+
+def templates_dir() -> Path:
+    """Where nuclei reads its templates (its own config, else ~/nuclei-templates)."""
+    import json
+    cfg = Path.home() / ".config" / "nuclei" / ".templates-config.json"
+    try:
+        d = json.loads(cfg.read_text()).get("nuclei-templates-directory")
+        if d:
+            return Path(d)
+    except (OSError, ValueError):
+        pass
+    return Path.home() / "nuclei-templates"
+
+
+def template_count() -> int:
+    d = templates_dir()
+    return sum(1 for _ in d.rglob("*.yaml")) if d.is_dir() else 0
+
+
 def update_nuclei_templates(progress: Callable[[str], None] | None = None) -> bool:
+    """nuclei's own updater first; on slow links its short download timeout fails,
+    so fall back to a shallow clone of the official templates repository. Success
+    means templates are actually on disk, not just a zero exit code."""
+    say = progress or (lambda _m: None)
     path = resolve("nuclei")
     if not path:
         return False
-    (progress or (lambda _m: None))("nuclei: updating templates")
+    say("nuclei: updating templates")
     try:
-        res = subprocess.run([path, "-update-templates", "-silent", "-disable-update-check"],
-                             capture_output=True, text=True, timeout=600)
+        subprocess.run([path, "-update-templates", "-silent"], capture_output=True, text=True, timeout=600)
+    except (OSError, subprocess.SubprocessError):
+        pass
+    if template_count() > 0:
+        return True
+    git = shutil.which("git")
+    if not git:
+        return False
+    target = templates_dir()
+    say(f"nuclei: downloading templates with git into {target}")
+    if target.exists() and not any(target.iterdir()):
+        target.rmdir()
+    try:
+        if (target / ".git").is_dir():
+            subprocess.run([git, "-C", str(target), "pull", "--depth", "1", "-q"], timeout=1800, check=False)
+        else:
+            subprocess.run([git, "clone", "--depth", "1", "-q", TEMPLATES_REPO, str(target)],
+                           timeout=1800, check=False)
     except (OSError, subprocess.SubprocessError):
         return False
-    return res.returncode == 0
+    return template_count() > 0
