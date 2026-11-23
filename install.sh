@@ -8,11 +8,17 @@
 #   --with-browser       add Playwright browser recon (downloads Chromium)
 #   --with-pdf           add PDF reports (needs pango/cairo system libraries)
 #   --from <path|url>    install from a local checkout or another git URL
+#   --no-tools           skip the scanners (install later: autopwnai tools install)
+#   --yes                install system packages (nmap, dig, openssl) without asking
+#   --no-system          never run the system package manager (no sudo)
 #   --no-setup           do not open the setup wizard afterwards
 #   --uninstall          remove AutoPwn AI (your settings and keys are kept)
 #
-# It installs uv (https://docs.astral.sh/uv) if missing, then the `autopwnai`
-# command into an isolated environment with its own Python. Nothing runs as root.
+# It detects the system, installs uv (https://docs.astral.sh/uv) if missing, then
+# the `autopwnai` command into an isolated environment with its own Python, then
+# the scanners it drives: nuclei, httpx, subfinder, katana, dnsx, naabu, ffuf and
+# gau from their official releases (SHA-256 verified, no root), and — after asking
+# — nmap, dig and openssl through your package manager (the only step using sudo).
 set -eu
 
 REPO="${AUTOPWN_REPO:-https://github.com/AshrafMostafaNmap/autopwn-ai}"
@@ -23,6 +29,8 @@ EXTRAS=""
 BROWSER=0
 RUN_SETUP=1
 UNINSTALL=0
+TOOLS=1
+SYSTEM_PKGS=ask
 
 if [ -t 1 ]; then
     G="$(printf '\033[32m')"; R="$(printf '\033[31m')"; D="$(printf '\033[2m')"
@@ -43,8 +51,11 @@ while [ $# -gt 0 ]; do
         --with-browser) add_extra browser; BROWSER=1; shift ;;
         --with-pdf) add_extra pdf; shift ;;
         --no-setup) RUN_SETUP=0; shift ;;
+        --no-tools) TOOLS=0; shift ;;
+        --yes|-y) SYSTEM_PKGS=yes; shift ;;
+        --no-system) SYSTEM_PKGS=no; shift ;;
         --uninstall) UNINSTALL=1; shift ;;
-        -h|--help) sed -n '2,16p' "$0" 2>/dev/null | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,24p' "$0" 2>/dev/null | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) fail "unknown option: $1 (see --help)" ;;
     esac
 done
@@ -70,9 +81,31 @@ if [ "$UNINSTALL" = 1 ]; then
     exit 0
 fi
 
+detect_system() {
+    OS_NAME="$(uname -s)"; ARCH="$(uname -m)"; DISTRO=""; PM=""
+    if [ "$OS_NAME" = "Darwin" ]; then
+        DISTRO="macOS $(sw_vers -productVersion 2>/dev/null || true)"
+        command -v brew >/dev/null 2>&1 && PM="brew"
+    else
+        if [ -r /etc/os-release ]; then
+            # shellcheck disable=SC1091
+            DISTRO="$(. /etc/os-release && echo "${PRETTY_NAME:-${NAME:-Linux}}")"
+        fi
+        for m in apt-get dnf pacman zypper apk yum; do
+            if command -v "$m" >/dev/null 2>&1; then PM="$m"; break; fi
+        done
+        [ "$PM" = "apt-get" ] && PM="apt"
+    fi
+    if [ "$(id -u)" = 0 ]; then PRIV="root"
+    elif command -v sudo >/dev/null 2>&1; then PRIV="sudo"
+    else PRIV="no sudo"; fi
+}
+
 say ""
 say "${B}AutoPwn AI${N} ${D}— purple-team vulnerability discovery agent${N}"
 say ""
+detect_system
+step "system: ${DISTRO:-$OS_NAME} · $ARCH · ${PM:-no package manager} · $PRIV"
 
 UV="$(find_uv)"
 if [ -z "$UV" ]; then
@@ -112,6 +145,24 @@ fi
 say ""
 say "${G}✓${N} installed: $("$APP" --version 2>/dev/null || echo autopwnai)"
 
+if [ "$TOOLS" = 1 ]; then
+    say ""
+    step "installing the scanners  ${D}(official releases, checksum-verified; ~250 MB the first time)${N}"
+    INTERACTIVE=0
+    if [ -t 1 ] && [ -r /dev/tty ] && [ -z "${CI:-}" ]; then INTERACTIVE=1; fi
+    set -- tools install
+    case "$SYSTEM_PKGS" in
+        yes) set -- "$@" --yes ;;
+        no) set -- "$@" --no-system ;;
+        *) [ "$INTERACTIVE" = 1 ] || set -- "$@" --no-system ;;
+    esac
+    if [ "$INTERACTIVE" = 1 ]; then
+        "$APP" "$@" </dev/tty || say "${D}  some tools were not installed — run later: autopwnai tools install${N}"
+    else
+        "$APP" "$@" || say "${D}  some tools were not installed — run later: autopwnai tools install${N}"
+    fi
+fi
+
 case ":$PATH:" in
     *":$BIN_DIR:"*) ON_PATH=1 ;;
     *) ON_PATH=0 ;;
@@ -124,6 +175,7 @@ fi
 say ""
 say "  start:      ${B}autopwnai${N}"
 say "  setup:      ${B}autopwnai setup${N}   ${D}(providers, keys, model)${N}"
+say "  scanners:   ${B}autopwnai tools${N}   ${D}(status · install · update)${N}"
 say "  update:     ${B}curl -fsSL <this script> | sh${N}"
 say "  uninstall:  ${B}curl -fsSL <this script> | sh -s -- --uninstall${N}"
 say ""

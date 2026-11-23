@@ -84,9 +84,13 @@ One line on Linux or macOS:
 curl -fsSL https://raw.githubusercontent.com/AshrafMostafaNmap/autopwn-ai/main/install.sh | sh
 ```
 
-It installs [uv](https://docs.astral.sh/uv) if needed, then `autopwnai` in its own
-isolated environment (with its own Python — nothing system-wide, no root), and
-offers to open the setup wizard. Options go after `sh -s --`:
+It detects your system (OS, distro, CPU, package manager), installs
+[uv](https://docs.astral.sh/uv) if needed, then `autopwnai` in its own isolated
+environment (with its own Python — nothing system-wide), then **every scanner it
+drives**: nuclei (+ templates), httpx, subfinder, katana, dnsx, naabu, ffuf and gau
+from their official releases (SHA-256 verified, no root), and — after asking —
+nmap, dig and openssl through your package manager, the only step that uses sudo.
+Finally it offers to open the setup wizard. Options go after `sh -s --`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/AshrafMostafaNmap/autopwn-ai/main/install.sh | sh -s -- --with-browser
@@ -94,6 +98,9 @@ curl -fsSL https://raw.githubusercontent.com/AshrafMostafaNmap/autopwn-ai/main/i
 
 | option | |
 |---|---|
+| `--yes` | install nmap / dig / openssl without asking |
+| `--no-system` | never use sudo (scanners only) |
+| `--no-tools` | the app only; scanners later with `autopwnai tools install` |
 | `--with-browser` | Playwright browser recon (downloads Chromium) |
 | `--with-pdf` | PDF reports (needs pango/cairo) |
 | `--ref v0.1.0` | a specific release or branch |

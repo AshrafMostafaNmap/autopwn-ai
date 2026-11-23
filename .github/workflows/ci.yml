@@ -37,9 +37,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install with install.sh from this checkout
-        run: sh install.sh --from . --no-setup
+        run: sh install.sh --from . --no-setup --no-tools
       - name: Smoke test
         run: |
           export PATH="$HOME/.local/bin:$PATH"
           autopwnai --version
           autopwnai providers
+          autopwnai tools install dnsx --no-system
+          autopwnai tools

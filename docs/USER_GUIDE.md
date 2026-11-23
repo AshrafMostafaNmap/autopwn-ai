@@ -16,11 +16,22 @@ it by chatting in plain language; there is no command language for the agent.
 curl -fsSL https://raw.githubusercontent.com/AshrafMostafaNmap/autopwn-ai/main/install.sh | sh
 ```
 
-The installer uses [uv](https://docs.astral.sh/uv) (installed into `~/.local/bin`
-if missing) to put AutoPwn AI in its own isolated environment with its own Python;
-nothing is installed system-wide and nothing runs as root. Add options after
-`sh -s --`: `--with-browser`, `--with-pdf`, `--ref <tag>`, `--uninstall`. Run it
-again to update.
+The installer:
+
+1. detects the system — OS, distro, CPU architecture, package manager (apt, dnf,
+   yum, pacman, zypper, apk, Homebrew) and whether sudo is available;
+2. installs [uv](https://docs.astral.sh/uv) into `~/.local/bin` if missing and puts
+   AutoPwn AI in its own isolated environment with its own Python;
+3. downloads the scanners — nuclei (and its templates), httpx, subfinder, katana,
+   dnsx, naabu, ffuf, gau — from their official releases, SHA-256 verified, into
+   `~/.local/share/autopwn/bin` (no root);
+4. asks before installing nmap, dig and openssl with your package manager — the
+   only step that uses sudo, and sudo asks for your password itself;
+5. offers to open the setup wizard.
+
+Options after `sh -s --`: `--yes` (system packages without asking), `--no-system`
+(never use sudo), `--no-tools` (app only), `--with-browser`, `--with-pdf`,
+`--ref <tag>`, `--uninstall`. Run it again to update.
 
 From a checkout instead: `sh install.sh --from .`, or for development
 `python -m venv .venv && . .venv/bin/activate && pip install -e ".[dev]"`.
@@ -192,7 +203,9 @@ stay in the tool output.
 
 ```bash
 autopwnai tools                 # what is installed, versions, how to get the rest
-autopwnai tools install         # all downloadable scanners (official releases, SHA-256 checked, no root)
+autopwnai tools install         # everything missing: downloads + (after asking) nmap/dig/openssl
+autopwnai tools install --yes   # same, without asking before the package manager runs
+autopwnai tools install --no-system   # downloads only, never sudo
 autopwnai tools install nuclei  # just one
 autopwnai tools update          # newer releases + fresh nuclei templates
 ```

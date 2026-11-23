@@ -34,8 +34,7 @@ def bin_dir() -> Path:
 class Scanner:
     name: str
     purpose: str
-    repo: str = ""                 # GitHub owner/name for release downloads
-    system: tuple[tuple[str, str], ...] = ()   # (package manager, command) for OS packages
+    repo: str = ""                 # GitHub owner/name for release downloads (else a system package)
 
     @property
     def downloadable(self) -> bool:
@@ -51,15 +50,9 @@ SCANNERS: dict[str, Scanner] = {s.name: s for s in [
     Scanner("naabu", "fast port discovery", "projectdiscovery/naabu"),
     Scanner("ffuf", "content discovery", "ffuf/ffuf"),
     Scanner("gau", "known URLs from public archives", "lc/gau"),
-    Scanner("nmap", "service and version detection",
-            system=(("pacman", "sudo pacman -S --needed nmap"), ("apt", "sudo apt install -y nmap"),
-                    ("dnf", "sudo dnf install -y nmap"), ("brew", "brew install nmap"))),
-    Scanner("dig", "DNS lookups",
-            system=(("pacman", "sudo pacman -S --needed bind"), ("apt", "sudo apt install -y dnsutils"),
-                    ("dnf", "sudo dnf install -y bind-utils"), ("brew", "brew install bind"))),
-    Scanner("openssl", "TLS inspection",
-            system=(("pacman", "sudo pacman -S --needed openssl"), ("apt", "sudo apt install -y openssl"),
-                    ("dnf", "sudo dnf install -y openssl"), ("brew", "brew install openssl"))),
+    Scanner("nmap", "service and version detection"),
+    Scanner("dig", "DNS lookups"),
+    Scanner("openssl", "TLS inspection"),
 ]}
 
 
@@ -140,9 +133,13 @@ def status() -> list[dict]:
 
 
 def system_hint(s: Scanner) -> str:
-    from ..onboarding import package_manager
-    pm = package_manager()
-    return next((cmd for mgr, cmd in s.system if mgr == pm), s.system[0][1] if s.system else "")
+    from ..system import install_hint
+    return install_hint(s.name)
+
+
+def missing_packages() -> list[str]:
+    """System-package tools (nmap, dig, openssl) that are not installed."""
+    return [s.name for s in SCANNERS.values() if not s.downloadable and not resolve(s.name)]
 
 
 class InstallError(RuntimeError):

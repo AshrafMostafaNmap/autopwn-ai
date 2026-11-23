@@ -63,6 +63,8 @@ def cmd_doctor(args: argparse.Namespace) -> int:
 
 def _print_scanners() -> None:
     from .onboarding import scan
+    from .system import detect
+    console.print(f"[bold]system[/]     {detect().summary()}")
     console.print("[bold]scanners[/]")
     for t in scan().tools:
         if t.path:
@@ -104,13 +106,23 @@ def cmd_mcp_serve(args: argparse.Namespace) -> int:
 
 # ── scanners ──────────────────────────────────────────────────────────────────
 def cmd_tools(args: argparse.Namespace) -> int:
+    from . import system
     from .recon import installer
     from .recon.runner import which
 
+    info = system.detect()
     if args.action in ("install", "update"):
-        names = args.names or [s.name for s in installer.SCANNERS.values() if s.downloadable]
+        console.print(f"[bold]system[/]  {info.summary()}")
+        wanted = args.names or [s.name for s in installer.SCANNERS.values()]
+        unknown = [n for n in wanted if n not in installer.SCANNERS]
+        if unknown:
+            console.print(f"[red]unknown tool(s):[/] {', '.join(unknown)}")
+            return 2
+        downloads = [n for n in wanted if installer.SCANNERS[n].downloadable
+                     and (args.action == "update" or args.names or not installer.resolve(n))]
+        packages = [n for n in wanted if not installer.SCANNERS[n].downloadable and not installer.resolve(n)]
         failed = 0
-        for name in names:
+        for name in downloads:
             try:
                 path = installer.install(name, progress=lambda m: console.print(f"[muted]  {m}[/]"))
                 console.print(f"[green]✓[/] {name} → {path}")
@@ -118,13 +130,15 @@ def cmd_tools(args: argparse.Namespace) -> int:
                 failed += 1
                 console.print(f"[red]✗[/] {e}", soft_wrap=True)
         which.cache_clear()
-        if "nuclei" in names and installer.resolve("nuclei"):
+        if "nuclei" in wanted and installer.resolve("nuclei") and (
+                downloads and "nuclei" in downloads or installer.template_count() == 0):
             ok = installer.update_nuclei_templates(lambda m: console.print(f"[muted]  {m}[/]"))
-            console.print("[green]✓[/] nuclei templates up to date" if ok
-                          else "[yellow]! nuclei templates could not be updated — run: nuclei -update-templates[/]")
-        system = [r for r in installer.status() if not r["installed"] and not r["downloadable"]]
-        for r in system:
-            console.print(f"[yellow]·[/] {r['name']} is a system package — {r['system_hint']}", soft_wrap=True)
+            console.print("[green]✓[/] nuclei templates ready" if ok
+                          else "[yellow]! nuclei templates could not be downloaded — run: autopwnai tools update nuclei[/]")
+        failed += _install_system_packages(packages, info, args)
+        which.cache_clear()
+        if not downloads and not packages:
+            console.print("[green]✓[/] everything is already installed")
         return 1 if failed else 0
 
     table = Table(title="scanners", title_style="muted", header_style="muted", box=None, pad_edge=False)
@@ -138,6 +152,42 @@ def cmd_tools(args: argparse.Namespace) -> int:
             table.add_row("[muted]·[/]", r["name"], r["purpose"], "", f"[muted]{how}[/]")
     console.print(table)
     return 0
+
+
+def _install_system_packages(packages: list[str], info, args) -> int:
+    """nmap / dig / openssl come from the OS. Installs them when allowed: --yes,
+    or an interactive confirmation; sudo asks for the password itself."""
+    from . import system
+    if not packages:
+        return 0
+    cmd = system.install_command(packages, info)
+    if cmd is None:
+        for name in packages:
+            console.print(f"[yellow]·[/] {name}: install it with your system's package manager")
+        return 0
+    line = " ".join(cmd)
+    if getattr(args, "no_system", False):
+        console.print(f"[yellow]·[/] system packages skipped — to add them: {line}", soft_wrap=True)
+        return 0
+    if not info.can_install_packages:
+        console.print(f"[yellow]·[/] {', '.join(packages)} need root — run as an administrator: {line}", soft_wrap=True)
+        return 0
+    yes = getattr(args, "yes", False)
+    if not yes:
+        if not sys.stdin.isatty():
+            console.print(f"[yellow]·[/] {', '.join(packages)} not installed — run: {line}", soft_wrap=True)
+            return 0
+        answer = console.input(f"Install {', '.join(packages)} with [bold]{line}[/]? [Y/n] ").strip().lower()
+        if answer in ("n", "no"):
+            console.print(f"[muted]skipped — later: {line}[/]", soft_wrap=True)
+            return 0
+    console.print(f"[muted]  running: {line}[/]", soft_wrap=True)
+    code = system.install_packages(packages, info)
+    if code == 0:
+        console.print(f"[green]✓[/] {', '.join(packages)} installed")
+        return 0
+    console.print(f"[red]✗[/] the package manager exited with {code} — run it yourself: {line}", soft_wrap=True)
+    return 1
 
 
 # ── providers / connect / models ──────────────────────────────────────────────
@@ -373,7 +423,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     tl = sub.add_parser("tools", help="list, install or update the external scanners")
     tl.add_argument("action", nargs="?", choices=["list", "install", "update"], default="list")
-    tl.add_argument("names", nargs="*", help="scanners to install (default: all downloadable)")
+    tl.add_argument("names", nargs="*", help="tools to install (default: everything missing)")
+    tl.add_argument("--yes", "-y", action="store_true", help="install system packages (nmap, dig, …) without asking")
+    tl.add_argument("--no-system", action="store_true", help="only user-space downloads; never run the package manager")
     tl.set_defaults(func=cmd_tools)
 
     x = sub.add_parser("export", help="export a saved chat as clean text, Markdown or HTML")

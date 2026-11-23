@@ -355,6 +355,8 @@ class SetupScreen(Screen):
             how = Text(t.install, style=GRAY) if t.install else Text("installed", style=FAINT)
             table.add_row(mark, Text(t.name, style=WHITE), Text(t.purpose, style=GRAY), how)
         self.query_one("#get-scanners", Checkbox).display = bool(self._missing_scanners())
+        if sc.system:
+            table.add_row(Text("·", style=FAINT), Text("system", style=WHITE), Text(sc.system, style=GRAY), Text(""))
         note = Text("\nOptional — the agent uses what is installed. Full install commands: autopwnai doctor",
                     style=FAINT)
         from rich.console import Group

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import os
 import shutil
-import sys
 from dataclasses import dataclass, field
 
 from .llm.catalog import PROVIDERS, endpoint_reachable, is_local_endpoint
@@ -44,49 +43,16 @@ class Scan:
     providers: list[ProviderScan] = field(default_factory=list)
     tools: list[ToolScan] = field(default_factory=list)
     launchers: dict[str, bool] = field(default_factory=dict)     # uvx / npx for MCP presets
+    system: str = ""                                             # "CachyOS · x86_64 · pacman · sudo"
 
     @property
     def ready_providers(self) -> list[str]:
         return [p.id for p in self.providers if p.found]
 
 
-_GO = "go install -v {pkg}@latest"
-TOOLS: tuple[tuple[str, str, dict[str, str]], ...] = (
-    ("nmap", "port and service discovery", {"apt": "sudo apt install nmap", "pacman": "sudo pacman -S nmap",
-                                            "dnf": "sudo dnf install nmap", "brew": "brew install nmap"}),
-    ("nuclei", "template-based vulnerability checks",
-     {"go": _GO.format(pkg="github.com/projectdiscovery/nuclei/v3/cmd/nuclei"), "brew": "brew install nuclei"}),
-    ("httpx", "HTTP probing and tech detection",
-     {"go": _GO.format(pkg="github.com/projectdiscovery/httpx/cmd/httpx"), "brew": "brew install httpx"}),
-    ("subfinder", "passive subdomain discovery",
-     {"go": _GO.format(pkg="github.com/projectdiscovery/subfinder/v2/cmd/subfinder"),
-      "brew": "brew install subfinder"}),
-    ("ffuf", "content discovery", {"go": _GO.format(pkg="github.com/ffuf/ffuf/v2"), "brew": "brew install ffuf",
-                                   "pacman": "sudo pacman -S ffuf"}),
-    ("katana", "crawling", {"go": _GO.format(pkg="github.com/projectdiscovery/katana/cmd/katana")}),
-    ("dig", "DNS lookups", {"apt": "sudo apt install dnsutils", "pacman": "sudo pacman -S bind",
-                            "dnf": "sudo dnf install bind-utils", "brew": "brew install bind"}),
-    ("openssl", "TLS inspection", {"apt": "sudo apt install openssl", "pacman": "sudo pacman -S openssl",
-                                   "dnf": "sudo dnf install openssl", "brew": "brew install openssl"}),
-)
-
-
 def package_manager() -> str:
-    if sys.platform == "darwin":
-        return "brew"
-    for name in ("apt", "pacman", "dnf"):
-        if shutil.which(name if name != "apt" else "apt-get"):
-            return name
-    return ""
-
-
-def install_hint(options: dict[str, str]) -> str:
-    pm = package_manager()
-    if pm in options:
-        return options[pm]
-    if "go" in options and shutil.which("go"):
-        return options["go"]
-    return options.get("go") or next(iter(options.values()), "")
+    from .system import detect_manager
+    return detect_manager()
 
 
 def _provider_found(info, stored: set[str], api_bases: dict[str, str]) -> str:
@@ -115,9 +81,11 @@ def scan(stored: set[str] | None = None, api_bases: dict[str, str] | None = None
             info.id, info.label, _provider_found(info, stored, api_bases),
             needs_key=info.requires_key, needs_endpoint=info.needs_api_base,
             note=info.note))
-    for name, purpose, options in TOOLS:
-        path = shutil.which(name)
-        out.tools.append(ToolScan(name, purpose, path, "" if path else install_hint(options)))
+    from .recon import installer
+    for row in installer.status():
+        hint = "" if row["installed"] else (f"autopwnai tools install {row['name']}" if row["downloadable"]
+                                            else row["system_hint"])
+        out.tools.append(ToolScan(row["name"], row["purpose"], row["path"], hint))
     try:
         import playwright  # noqa: F401
         browser = True
@@ -127,4 +95,6 @@ def scan(stored: set[str] | None = None, api_bases: dict[str, str] | None = None
                               "python package" if browser else None,
                               "" if browser else "reinstall with: install.sh --with-browser"))
     out.launchers = {"uvx": bool(shutil.which("uvx")), "npx": bool(shutil.which("npx"))}
+    from .system import detect
+    out.system = detect().summary()
     return out
