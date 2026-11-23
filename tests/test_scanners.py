@@ -222,3 +222,28 @@ def test_nuclei_groups_matchers_skips_info_and_uses_default_tags(make_session, f
     assert [f.title for f in s.findings()] == ["Generic Env File Disclosure"]     # info stays out
     _call(s, "template_scan", targets=["http://app.lab"], full=True)
     assert "-tags" not in calls[-1][1]
+
+
+def test_installer_falls_back_to_release_pages_when_api_refuses(monkeypatch, tmp_path):
+    import hashlib
+    monkeypatch.setattr(installer, "bin_dir", lambda: tmp_path / "bin")
+    monkeypatch.setattr(installer, "platform_tags", lambda: (("linux",), ("amd64",)))
+    blob = _zip("dnsx")
+    digest = hashlib.sha256(blob).hexdigest()
+
+    def handler(req: httpx.Request):
+        url = str(req.url)
+        if "api.github.com" in url:
+            return httpx.Response(403, json={"message": "API rate limit exceeded"})
+        if url.endswith("/releases/latest"):
+            return httpx.Response(302, headers={"Location": "https://github.com/projectdiscovery/dnsx/releases/tag/v1.3.1"})
+        if url.endswith("/releases/tag/v1.3.1"):
+            return httpx.Response(200, text="release page")
+        if "expanded_assets" in url:
+            return httpx.Response(200, text='<a href="/projectdiscovery/dnsx/releases/download/v1.3.1/dnsx_1.3.1_linux_amd64.zip">z</a>'
+                                            '<a href="/projectdiscovery/dnsx/releases/download/v1.3.1/dnsx_1.3.1_checksums.txt">c</a>')
+        if url.endswith(".zip"):
+            return httpx.Response(200, content=blob)
+        return httpx.Response(200, text=f"{digest}  dnsx_1.3.1_linux_amd64.zip\n")
+    client = httpx.Client(transport=httpx.MockTransport(handler), follow_redirects=True)
+    assert installer.install("dnsx", client=client).read_bytes().startswith(b"#!/bin/sh")

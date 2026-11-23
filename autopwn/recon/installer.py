@@ -200,11 +200,8 @@ def install(name: str, *, token: str | None = None, client: httpx.Client | None 
     own = client is None
     client = client or _http(token or os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN"))
     try:
-        rel = client.get(f"https://api.github.com/repos/{s.repo}/releases/latest")
-        if rel.status_code != 200:
-            raise InstallError(f"could not read {s.repo} releases (HTTP {rel.status_code})")
-        data = rel.json()
-        assets = {a["name"]: a["browser_download_url"] for a in data.get("assets", [])}
+        tag, assets = _latest_release(client, s.repo)
+        data = {"tag_name": tag}
         archive, sums = pick_asset(list(assets), name)
         if archive is None:
             osn, arch = platform_tags()
@@ -228,6 +225,26 @@ def install(name: str, *, token: str | None = None, client: httpx.Client | None 
     finally:
         if own:
             client.close()
+
+
+def _latest_release(client: httpx.Client, repo: str) -> tuple[str, dict[str, str]]:
+    """(tag, {asset name: download url}). The API first; when it refuses (rate
+    limits on shared IPs), the public release pages, which need no API quota."""
+    rel = client.get(f"https://api.github.com/repos/{repo}/releases/latest")
+    if rel.status_code == 200:
+        data = rel.json()
+        return data.get("tag_name", ""), {a["name"]: a["browser_download_url"] for a in data.get("assets", [])}
+    page = client.get(f"https://github.com/{repo}/releases/latest")
+    tag = str(page.url).rstrip("/").rsplit("/", 1)[-1]
+    if page.status_code != 200 or "/releases/tag/" not in str(page.url):
+        raise InstallError(f"could not read {repo} releases (HTTP {rel.status_code}; set GITHUB_TOKEN if this "
+                           "is a rate limit)")
+    listing = client.get(f"https://github.com/{repo}/releases/expanded_assets/{tag}")
+    links = re.findall(r'href="(/[^"]+/releases/download/[^"]+)"', listing.text)
+    assets = {link.rsplit("/", 1)[-1]: "https://github.com" + link for link in links}
+    if not assets:
+        raise InstallError(f"could not list the assets of {repo} {tag}")
+    return tag, assets
 
 
 def _checksum_for(text: str, archive: str) -> str | None:
